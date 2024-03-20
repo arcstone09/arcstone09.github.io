@@ -270,7 +270,7 @@ defaults:
   # _study
   - scope:
       path: ""
-      type: posts
+      type: study
     values:
       layout: single
       author_profile: true
@@ -282,7 +282,7 @@ defaults:
   # _project
   - scope:
       path: ""
-      type: posts
+      type: project
     values:
       layout: single
       author_profile: true
