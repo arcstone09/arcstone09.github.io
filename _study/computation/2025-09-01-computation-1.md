@@ -14,7 +14,7 @@ In this post, 01 Computation lecture is introuduced.
 
 
 
-# 1. Computational Process
+# 1.1.1 Computational Process
 
 - 컴퓨터 안에 사는 추상적 존재 (*컴퓨터의 영혼?*)
 - 전개되면서 데이터라 부르는 또다른 추상적 존재를 조작
@@ -22,7 +22,7 @@ In this post, 01 Computation lecture is introuduced.
 
 
 
-# 2. 프로그래밍의 기본요소
+# 1.1.2. 프로그래밍의 기본요소
 
 - 단순한 아이디어를 조합해서 좀 더 복잡한 아이디어로 만드는 데 사용하는 프로그래밍 언어의 메커니즘
 - R 해석기(interpreter)에 표현식(expression)을 입력하면 해석기는 이를 평가(evaluate)하여 결과를 표시.
@@ -36,9 +36,9 @@ In this post, 01 Computation lecture is introuduced.
 
 
 
-# 3. 이름붙이기와 환경
+# 1.1.3. 이름붙이기와 환경
 
-## 3.1 이름붙이기
+## 1.1.3.1 이름붙이기
 
 - 계산적 개체(computational objects)를 이름 짓고 그 이름으로 지칭 — 프로그래밍 언어의 필수 요소
 - 이름은 값이 개체인 변수(variable)와 동일시된다.
@@ -48,7 +48,7 @@ In this post, 01 Computation lecture is introuduced.
 (size <- 2) # if you insist on seeing the value
 ```
 
-## 3.2 환경(environment)
+## 1.1.3.2 환경(environment)
 
 - (이름, 개체) 쌍을 보관하는 메모리 공간
 - 이름과 값을 연관짓고 이름으로부터 값을 조회할 수 있으려면 이러한 메모리 공간이 반드시 필요
@@ -56,7 +56,7 @@ In this post, 01 Computation lecture is introuduced.
 
 
 
-# 4. 조합 평가하기
+# 1.1.4. 조합 평가하기
 
 - 주어진 조합을 평가하기 위해
 
@@ -74,7 +74,7 @@ In this post, 01 Computation lecture is introuduced.
 
 - 평가는 재귀적(recursive).
 
-## 4.1 원초 표현식의 평가
+## 1.1.4.1 원초 표현식의 평가
 
 - 단계 1을 반복하다 보면 원초 표현식을 평가해야 하는 지점에 도달
   - 수치, 원초 함수, 이름 등
@@ -83,7 +83,7 @@ In this post, 01 Computation lecture is introuduced.
   - 원초 함수의 값은 해당 연산을 수행하는 일련의 기계 명령
   - 이름의 값은 환경에서 그 이름과 연관된 개체
 
-## 4.2 조합 평가 규칙의 예외
+## 1.1.4.2 조합 평가 규칙의 예외
 
 ```R
 x <- 2
@@ -96,15 +96,30 @@ x <- 2
 
 
 
-# 5. 복합함수
+# 1.1.5. 복합함수
 
-## 적용 순서 평가와 정상 순서 평가
+## 1.1.5.1 함수 안의 함수
 
-- 적용 순서 평가(applicative-order evaluation): 앞서의 평가 방식
+```r
+sum_of_squares <- function(x, y) {
+  square(x) + square(y)
+}
+sum_of_squares(3, 4)
+```
+
+
+
+# 1.1.6 함수 적용의 치환 모형
+
+## 1.1.6.1 적용 순서 평가와 정상 순서 평가
+
+- 위에서 배운 **조합 평가 방식** 은 어떤 식(expression)을 평가할 때, **하위 표현식(subexpression)** 을 먼저 평가한 후, 최상위 함수(연산자)를 적용하는 방식이고 그 방식을 함수 인자에 대입하여 생각했을 때, 적용 순서 평가와 정상 순서 평가로 나뉨.
+
+- **적용 순서 평가 (applicative-order evaluation)**
 
   - 인자로 전달된 식을 **먼저 전부 계산**한 뒤, 함수에 전달
 
-- 정상 순서 평가: 완전 전개 후 축약
+- **정상 순서 평가 (normal-order evaluation)**: 완전 전개 후 축약
 
   - 함수 호출 시 인자를 **계산하지 않고 그대로 대입**한 뒤, 실제로 필요할 때 계산.
 
