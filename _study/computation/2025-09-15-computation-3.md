@@ -1,7 +1,7 @@
 ---
-title: "[Computation] 02 Lazy Evaluation, Lexical Scoping"
-date: 2025-09-08
-permalink: /study/2025-09-08-computation-2
+title: "[Computation] 03 Basic Elements of Programming"
+date: 2025-09-15
+permalink: /study/2025-09-15-computation-3
 categories: Computation
 tags: 
   - Computation
@@ -10,7 +10,7 @@ tags:
 
 ---
 
-In this post, 02 Computation lecture is introuduced. 
+In this post, 03 Computation lecture is introuduced. 
 
 
 
