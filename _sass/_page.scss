@@ -54,10 +54,10 @@
   text-align-last: left;
   
   /* 추가 */
-  line-height: 1.0;          /* 줄 간격 */
-  letter-spacing: -0.04em;         /* 자간 줄이기 */
-  word-spacing: -0.05em;           /* 단어 간격 줄이기 */
-  text-justify: inter-word;  /* 글자 벌어짐 방지 */
+  line-height: 0.4;          /* 줄 간격 */
+  letter-spacing: -0.08em;         /* 자간 줄이기 */
+  word-spacing: -0.06em;           /* 단어 간격 줄이기 */
+  text-justify: inter-character;  /* 글자 벌어짐 방지 */
 
   h2 {
     padding-bottom: 0.5em;
