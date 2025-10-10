@@ -72,13 +72,24 @@ In this post, 01 System Programming lecture is introuduced.
   ```c
   char *s = "hello world\n";
   char k[20] = "SNU CSE00800";
+  char arr1[] = "hello"; 
   sizeof(s) // 8
   strlen(s) // 12
   sizeof(k) // 20
   strlen(k) // 12
+  sizeof(arr1) // 6
+  strlen(arr1) // 5
+    
+  char arr2[] = "hello\0"; 
+  sizeof(arr2) // 7 저장될때 추가로 \0 더 붙음
+  strlen(arr2) // 5 # 첫 번재 \0을 만나기 전까지의 개수 출력
   ```
   
-  
+  - **null character (널 문자)** = 아스키 코드 값이 **0 (0x00)** 인 문자. 아스키 표에서 이름은 **NUL** (Null).
+  - **null character (`\0`)** ≠ **NULL (null pointer)** ≠ **0**
+    - `'\0'`: 값이 0인 문자 (char, 길이 1 바이트).
+    - `NULL`: 어떤 것도 가리키지 않는 포인터 상수.
+    - `0`: 정수 값.
   
   ## Assignment
   
