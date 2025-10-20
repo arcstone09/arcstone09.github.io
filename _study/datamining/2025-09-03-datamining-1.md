@@ -15,11 +15,11 @@ In this post, 02 Data Mining lecture is introuduced.
 
 # Importance of Words in Documents
 
-#### Application
+## Application
 
 문서 안에서 특정 단어의 중요도를 평가하는 일은 **search engine** 에서 매우 중요하다. 예를 들어, goole에 "Seoul" 이라는 쿼리로 검색했을 때, 해당 단어의 중요도가 높은 문서일수록 우선적으로 보여지게 하는 작업이 필요하다. 
 
-#### TF.IDF
+## TF.IDF
 
 **TF.IDF** 는 문서 내 단어의 중요도를 평가하는 measure이다. 다음의 idea에 기인한다.
 
@@ -41,7 +41,8 @@ TF.IDF 점수는 다음 두 가지 경우에 활용할 수 있다.
 - 하나의 doc 내에서 term 들을 중요도 순으로 ranking을 매기는 경우.
   - $TF_{ij}$ 는 term별로 상이, $IDF_i$ 도 term별로 상이
 
-#### Code
+## Code
 
 아래는 문서가 주어졌을 때, 해당 문서의 TF.IDF score를 계산해주는 코드를 구현한 것이다. 
 
+To Do .. 
