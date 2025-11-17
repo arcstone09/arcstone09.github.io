@@ -86,7 +86,7 @@ F_{n} & F_{n-1}
 
 (Hint : $n$이 짝수일 때, $b^n = (b^{n/2})^2$ )
 
-### (c)
+### (c) (15 points)
 
 선형반복 과정을 이용하여 같은 동작을 하는 함수를 구현하고 시간 복잡도를 서술하라. 여기서는 행렬이 R의 기본 객체임을 가정하지 않는다. 
 
@@ -99,6 +99,8 @@ $ \begin{pmatrix}
 p+k & k \\
 k & p
 \end{pmatrix}$
+
+(-15점 감점)
 
 ### (d)
 
@@ -116,7 +118,7 @@ k & p
 무명 함수 관련 간단한 코드
 ```
 
-
+(함수 인자 전달시 x=20, x*2 이었는데 40이 되는 이유 서술 안해서 -5점 감점.)
 
 ### (b)
 
@@ -151,7 +153,7 @@ accumulate <- function(op, initial, sequence){
 accumulate(function(x, y){x + y}, 0, List(1, 2, 3, 4))
 ```
 
-### (b)
+### (b) (25 points)
 
 다음 값을 계산하라.
 
@@ -159,7 +161,7 @@ accumulate(function(x, y){x + y}, 0, List(1, 2, 3, 4))
 accumulate(function(x, y){2*x + 2*y}, 0, List(1, 2, 3, 4))
 ```
 
-
+(98 답인데 마지막에 96이라 적어서 1점 감점)
 
 ## #5
 
@@ -171,7 +173,7 @@ pair가 아래와 같이 주어졌을 때, head 함수 구현하라.
 pair <- function(x, y) {function(m) m(x, y)}
 ```
 
-### (b)
+### (b) (10 points)
 
 다음처럼 polygon이 주어질 때, 해당 List를 박스 그림으로 그려라.
 
@@ -179,7 +181,9 @@ pair <- function(x, y) {function(m) m(x, y)}
 polygon <- List(List(0, 0), List(1, 0), List(0, 1))
 ```
 
-### (c)
+(마지막에 노드 하나 안그려서 -10점 감점)
+
+### (c) 
 
 polygon이 나타내는 기하학적 대상을 서술하고, polygon의 두 번째 점의 x좌표를 구하기 위한 표현식을 서술하라.
 
@@ -216,3 +220,4 @@ appnd <- function
   ... 함수 제공
 ```
 
+(-20 감점)
