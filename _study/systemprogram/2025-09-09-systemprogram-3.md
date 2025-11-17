@@ -78,6 +78,23 @@ array의 이름이 pointer가 아니라는 사실을 pointer와 다른 동작을
     p++;
   ```
 
+2차원 배열에서도 마찬가지이다. 
+
+```c
+int inArr[10][3];
+
+inArr[i]        → inArr[i][0]의 주소 (int*)
+inArr[i][0]     → 값
+&inArr[i][0]    → 주소
+  
+scanf("%d", inArr[i][0]);    // ❌ 값이라 오류
+scanf("%d", &inArr[i][0]);   // ✅ 주소를 넘겨야 함
+printf("%d", inArr[i][0]);   // ✅ 값을 넘겨야 함
+printf("%d", &inArr[i][0]);	 // ❌ 주소라 오류
+```
+
+
+
 ## Array Arguments
 
 아래 내용을 이해하기 위해 `const` 키워드에 대한 이해가 필요하다.
