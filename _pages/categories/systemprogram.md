@@ -1,6 +1,6 @@
 ---
 layout: category-manual
-title: "Invitation"
+title: "System Programming"
 permalink: /categories/systemprogram/
-category: systemprogramming
+category: SystemProgramming
 ---
