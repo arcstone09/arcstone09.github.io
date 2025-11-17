@@ -1,6 +1,6 @@
 ---
 layout: category-manual
-title: "Python"
-permalink: /categories/python/
-category: Python
+title: "Invitation"
+permalink: /categories/invitation/
+category: invitation
 ---
