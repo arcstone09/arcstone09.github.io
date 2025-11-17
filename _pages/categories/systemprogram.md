@@ -1,6 +1,6 @@
 ---
 layout: category-manual
 title: "System Programming"
-permalink: /categories/systemprogram/
+permalink: /categories/systemprogramming/
 category: SystemProgramming
 ---
