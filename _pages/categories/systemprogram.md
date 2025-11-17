@@ -1,6 +1,6 @@
 ---
 layout: category-manual
-title: "System Programming"
-permalink: /categories/systemprogram/
-category: SystemProgramming
+title: "Invitation"
+permalink: /categories/invitation/
+category: invitation
 ---
