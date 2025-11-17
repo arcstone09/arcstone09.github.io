@@ -2,9 +2,9 @@
 title: "[Startup] Asteromorph in SNU"
 date: 2025-11-17
 permalink: /study/2025-11-17-invitation-1
-categories: invitation
+categories: Invitation
 tags: 
-  - invitation
+  - Invitation
 
 ---
 
