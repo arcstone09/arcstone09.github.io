@@ -72,7 +72,7 @@ int n = epoll_wait(epfd, events, MAX, -1);
 
 ## Process Control Block (PCB)
 
-처음에 Process는 1. private CPU state, 2. private address space, 3. kernel data structure 를 가진다고 했다. 이 때 kernel data structure 중 하나가 PCB이다. 그리고 PCB에는 private CPU state의 내용이 저장되어 있고, private address space는 PCB에 저장되지 않고 실제 메모리(physical memory)와 page table에 존재하지만, PCB는 이에 대한 포인터를 가지고 있다. 
+처음에 Process는 1. private CPU state, 2. private address space, 3. kernel data structure 를 가진다고 했다. 이 때 3. kernel data structure 중 하나가 PCB이다. 그리고 PCB에는 1. private CPU state의 내용이 저장되어 있고, 2. private address space는 PCB에 저장되지 않고 실제 메모리(physical memory)와 page table에 존재하지만, PCB는 이에 대한 포인터를 가지고 있다. 
 
 - Process state(new, ready, ...)
 - Program Counter(정확히는 pc에 대한 포인터)
@@ -215,5 +215,131 @@ prctl(PR_SET_PDEATHSIG, SIGKILL);
 
 
 
+## Synchronizing with children
+
+자식이 프로세스를 종료하는 과정에서 `exit()` 시스템 콜 함수가 실행되는데, 이 때 커널은 다음 세 가지 일은 수행한다. 
+
+- 부모에게 SIGCHLD 시그널을 보냄
+  - 자식 종료 시 **커널이 부모에게 SIGCHLD signal을 deliver**
+
+- SIGCHLD를 보낸 경우, 부모가 wait() 중인지 체크하여 wait 중이면 parent를 wake_up()
+  - 부모를 wakeup(run queue로 이동)
+
+- 부모가 wait() 가능하도록 자식 상태를 “좀비(Zombie)”로 남김
+
+  - exit code, 종료 원인 등을 PCB에 저장해둠
+
+  - 부모가 `wait()`/`waitpid()`를 호출하면 이 정보를 읽고 좀비를 수거(reap)
+
+부모 process에서 `waitpid()` 또는 `wait()` 시스템 콜 함수를 실행하면, 해당 process는 waiting 상태가 된다. 이후, 종료된 자식 process로부터 SIGCHLD signal이 전달되고 커널이 부모를 wakeup(run queue로 이동)한다. 이렇게 wakeup 되어 wait 함수가 다시 실행되면 이제는 자식 process의 종료에 관련된 정보가 wstatus에 담기고, 리턴된다.
+
+```c
+pid_t wait(int *wstatus);
+```
+
+- 아무 자식이나 종료될 때까지 기다린다.
+- return 값은 종료된 자식의 PID
+- 함수 실행 후, wstatus가 NULL이 아니면 wstatus에는 자식의 exit code, 어떤 이유로 종료되었는지(signal 등) 이런 상태 정보 비트를 담는다.
+
+```c
+pid_t waidpid(pid_t pid, int *wstatus, int options);
+```
+
+- `pid`
+  - `pid > 0`: 해당 PID의 자식을 기다림
+  - `pid = 0`: **같은 프로세스 그룹**의 아무 자식
+  - `pid = -1`: 모든 자식(= `wait()`와 동일)
+  - `pid < -1`: 특정 프로세스 그룹(-pid)
+
+
+- options 
+
+  - `WNOHANG`: 종료된 자식이 없어도 블록하지 않음
+
+  - `WUNTRACED`: stop된(child stopped) 상태도 리포트
+
+  - `WCONTINUED`: continue된(child resumed) 상태도 리포트
+
+
+`waidid` 는 `waitpid`보다 훨씬 다양한 상태 변화를 감지한다.
+
+```c
+int waitid(idtype_t idtype, id_t id, siginfo_t *infop, int options);
+```
+
+
+
+이 때, exit code가 담긴 wstatus를 다음 매크로 함수의 인자로 전달하여 사용할 수 있다. 
+
+- `WIFEEXITED(wstatus)`
+  - 자식 프로세스가 exit() 또는 return으로 정상 종료했다면 true(1)을 반환한다.
+- `WIFEEXITSTATUS(wstatus)`
+  - 정상 종료(WIFEXITED(status) == true)라면 exit(코드)에서 전달한 **exit code(0~255)**를 반환한다.
+
+## Loading and Running Programs
+
+위에서 shell의 동작 방식에 대해 다루면서 언급한 `execve` 시스템 콜은 **PID는 유지한 채, 코드/데이터/스택을 새로운 프로그램으로 교체**하는 시스템 콜이다. 
+
+```c
+int execve(char *pathname, char *argv[], char *envp[]);
+```
+
+- `pathname` : 로드할 실행파일 경로
+
+- `argv` : 프로그램에 넘기는 인자 배열
+
+  ```c
+  argv[0] = "ls"
+  argv[1] = "-l"
+  ...
+  argv[argc] = NULL // 반드시 NULL로 끝나야함.
+  ```
+
+- `envp`  : 환경변수 배열
+
+  ```c
+  "PATH=/usr/bin"
+  "HOME=/home/lee"
+  ```
+
+  - 문자열 형식: `"key=value"`
+  - 사용자 프로그램은 `getenv()`, `putenv()` 등으로 접근 가능
+
+**execve가 하는일**
+
+1. 실행 파일을 찾고 열기
+
+- 커널이 pathname의 파일을 찾고 ELF 로더 실행.
+
+2. **현재 프로세스의 주소 공간 완전히 폐기**
+
+기존 프로세스의 코드 영역 (텍스트), 데이터/BSS, 힙, 스택 전부 삭제함. 즉, 메모리 매핑 테이블(PTE)도 싹 초기화됨. mm_struct 내용도 새로 채워짐.
+
+3. 새로운 프로그램을 주소 공간에 로드
+
+- ELF 헤더를 읽어: 새 `.text`,   `.data`, heap 초기 위치, stack 이 모든 것을 새 주소 공간에 매핑.
+
+❗️execve는 프로세스의 커널 정보는 유지함.
+
+1. PID 유지 : 프로세스는 “같은 프로세스”로 간주됨.
+2. open file table 유지 : 파일 디스크립터 0,1,2 포함 모두 유지됨. 단, FD_CLOEXEC 플래그가 걸린 FD는 닫힘.
+3. signal disposition 유지
+
+- 핸들러가 SIG_DFL이 아닌 값으로 바뀌어 있으면 기본값으로 리셋됨
+- block mask는 그대로 유지됨
+  (자세한 내용은 signal-chapter에서 이어짐)
+
+4. cwd, umask 같은 커널 상태 유지됨
+
+❗️execve는 정상 실행되면 **절대 반환되지 않는다**
+
+왜냐하면 기존 프로그램이 완전히 사라졌기 때문. execve가 리턴하는 경우 = 오류 발생 시에만, 즉, pathname이 존재하지 않거나 permission 문제가 있을 때만 -1 반환.
+
+![image-20251122104850885](../../images/2025-10-30-systemprogram-12/image-20251122104850885.png)
+
 ![image-20251116191151459](../../images/2025-10-30-systemprogram-12/image-20251116191151459.png)
+
+
+
+I'm not entirely sure, but it seems possible for a reader to starve in the first readers–writers problem. If the first reader gets blocked on `P(w)` while a writer holds the lock, and new writers keep arriving, the scheduler might keep letting writers run first. In that case, the reader-preference idea doesn’t really help, because the first reader never gets a chance to acquire the lock.
 
