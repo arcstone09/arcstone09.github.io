@@ -817,6 +817,81 @@ void *handle = dlopen("libvector.so", RTLD_LAZY);
 
 2. (생략)
 
+Runtime Linking 과정을 요약하면 다음과 같다. 
+
+1. **Load Library**
+
+   - ```c
+     void *handle = dlopen("./libvector.so", RTLD_LAZY);
+     ```
+
+   - `dlopen` : 실행 중에 `.so` 파일을 메모리에 로드하는 함수, 반환값은 **라이브러리 핸들(pointer)**
+   - `RTLD_LAZY` : 함수 심볼을 **실제로 사용할 때** 해석함, 즉 처음부터 전부 linking하지 않음
+
+   - `RTLD_NOW` : 로딩 순간 모든 심볼을 바로 해석
+
+2. **Obtain address of function**
+
+   - ```c
+     void (*addvec)(int *, int *, int *, int);
+     addvec = dlsym(handle, "addvec");
+     ```
+
+   - `dlsym` : 라이브러리 내부의 특정 함수 주소를 찾아줌, 문자열 이름으로 검색함
+
+   - 라이브러리는 실행 중에 로드되기 때문에 컴파일 시점에는 함수의 주소를 모른다. 그래서 함수 포인터를 선언하고,
+
+     `dlsym`이 반환한 주소를 거기에 넣는 것.
+
+3. **Call Function**
+
+   - ```c
+     addvec(x, y, z, 2);
+     ```
+
+   - 이제 일반함수처럼 사용 가능. 실제로는 addvec → 함수 포인터 → .so 내부 코드 
+
+❗️**Load** 된 shared library를 여러 프로세스에서 사용하는 경우, 각 프로세스의 가상주소에 매핑되지만, 물리 메모리 페이지는 공유된다. 
+
+**각 프로세스의 가상주소**
+
+```scss
+프로세스 A 가상 주소 공간
+---------------------------------
+0x400000  main text
+0x7f123000 libc.so text   ← 여기 매핑
+---------------------------------
+
+프로세스 B 가상 주소 공간
+---------------------------------
+0x400000  main text
+0x7f88a000 libc.so text   ← 여기 매핑
+---------------------------------
+```
+
+**실제 RAM** 물리 페이지는 **하나만 존재**함.
+
+```scss
+물리 메모리 (RAM)
+---------------------------------
+[ page 1 ] libc.so .text 일부
+[ page 2 ] libc.so .text 일부
+[ page 3 ] libc.so .text 일부
+---------------------------------
+```
+
+**각 프로세스의 PTE**
+
+```scss
+프로세스 A page table
+   0x7f123000 → 물리 page 1
+   0x7f124000 → 물리 page 2
+
+프로세스 B page table
+   0x7f88a000 → 물리 page 1
+   0x7f88b000 → 물리 page 2
+```
+
 
 
 
