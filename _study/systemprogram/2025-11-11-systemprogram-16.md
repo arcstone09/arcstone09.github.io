@@ -1,5 +1,5 @@
 ---
-title: "[System Programming] 11 Network Programming"
+title: "[System Programming] 11 Network Basic"
 date: 2025-11-11
 permalink: /study/2025-11-11-systemprogram-16
 categories: SystemProgramming
@@ -9,202 +9,214 @@ tags:
 
 ---
 
-In this post, 22 ~ 23 System Programming lecture is introuduced. 
+In this post, 22 System Programming lecture is introuduced. 
 
 
 
-// 11.11, 11.13 (녹음 강의)
+# Computer Networks
+
+컴퓨터 네트워크에 대한 아주 기본적인 개념만 설명한다. 자세한 내용은 내년에 네트워크 강의를 듣기로 한다.
+
+network 란, 박스(컴퓨터, 서버, 스위치 등) + 선(케이블) → 이들이 **지리적 거리 기준으로 계층적으로 구성된 시스템** 이다.
+
+intetnet은 internetwork의 약자로, 네트워크들의 네트워크이다.
+
+Internet은 가장 유밍한 우리가 사용하는 internet이다. internet이지만 Internet이 아닌 예시는 인트라넷, military network 등이 있다.
+
+- **Ethernet segment** : 여러 host(컴퓨터) 들이 UTP 케이블로 연결된 네트워크의 가장 기본 단위이다.
+
+  - ![image-20260423202220707](../../images/2025-11-11-systemprogram-16/image-20260423202220707.png)
+  - 각 컴퓨터가 hub에 연결되어 있는데 이 때 hub의 연결점을 **port**라 한다.
+  - 모든 컴퓨터는 네트워크 카드를 가지고, 모든 네트워크 카드에는 **MAC address** 라는 48-bit 고유주소가 있다.
+  - 컴퓨터는 데이터를 bit들의 묶음인 **frame** 단위로 보낸다. host A → host B로 보내고 싶으면 frame 안에 “목적지 MAC 주소” 넣어서 전송한다.
+  - hub는 들어온 신호를 모든 포트로 그대로 복사해서 뿌린다. 이를 **broadcast**라 한다. 
+  - 그 결과 ethernet setment에서는 모든 컴퓨터가 모든 데이터를 다 보게 된다. 그러나 목적지가 MAC 주소가 자신이 아니었다면 그냥 버린다.
+
+- **Bridged Ethernet Segment** : 가운데 있는 **bridge/switch (X, Y)**에 여러 LAN을 연결되어, 여러 이더넷 세그먼트를 하나의 네트워크처럼 연결하는 구조이다.
+
+  - ![image-20260423203103003](../../images/2025-11-11-systemprogram-16/image-20260423203103003.png)
+
+  - Bridge/swith는 frame이 들어오는 포트를 기반으로, 어떤 MAC 주소가 어느 포트 뒤에 있는지 table에 저장한다.(X는 Y 뒤에 연결되어 있는 host들의 정보도 저장한다.)
+  - 예 : (A, 왼쪽 스위치, 브리지 X의 포트1), (C, 오른쪽 아래 스위치, 브리지 Y의 포트3) 
+  - A → C로 보낼 때, 브리지가 C가 어느 포트인지 알고 있다면, 해당 포트로만 전달한다.
+  - 처음보는 MAC 주소일 때는 모든 포트로 뿌린다.
+  - 같은 세그먼트 내부일 때 : 브리지로 전달을 하지 않는다.
+  - 이런식으로, 건물 / 캠퍼스 범위의 네트워크 전체 연결이 가능하다. 
+
+- **LAN** : 한 지역(집, 학교, 회사 등)에서 여러 호스트들이 연결된 **전체 네트워크**를 의미한다. 위에서 본 것처럼 Ethernet을 이용한 네트워크, WiFi를 이용한 네트워크 기술 등등 여러 기술이 존재한다. 
+
+  - 간단히, 호스트, 허브, 브릿지, LAN선을 다음과 같이 호스트가 하나의 wire에 연결된 그림으로 나타낸다.
+
+![image-20260423204317585](../../images/2025-11-11-systemprogram-16/image-20260423204317585.png)
+
+- **internets** : 이제 여러 LAN 네트워크들을 연결하여 더 큰 네트워크를 만들고 싶다. 그런데, ethernet, WiFi 등 여러 LAN 기술들이 incompatiable 하기 때문에 이를 해결해야 한다. 
+  - ![image-20260423205944546](../../images/2025-11-11-systemprogram-16/image-20260423205944546.png)
+  - **라우터(router)**는 서로 다른 네트워크를 **연결 + 변환 + 전달**하는 장치이다.
+  - ![image-20260423210925504](../../images/2025-11-11-systemprogram-16/image-20260423210925504.png)
+  - 인터넷은 정해진 구조(트리, 링 등)가 없고 그냥 여러 네트워크가 막 연결된 형태이다. 이를 **ad hoc interconnection**이라 한다.
+  - 데이터는 한 번에 가지 않고 여러 네트워크를 hop(점프) 하면서 이동한다. 라우터가 다음 목적지 방향을 결정해서 넘긴다. 구체적으로 패킷이 라우터에 도착하면 목적지 **IP**를 보고 어디로 보내야 하는지 결정해서 다음 라우터로 넘긴다. 이 때, 라우터는 **라우팅 테이블**을 조회하여 결정을 내린다. 
+  - MAC 주소는 같은 LAN 안에서 장치를 식별해 바로 옆으로 데이터를 전달할 때 쓰이는 물리 주소이고, IP 주소는 네트워크 간을 넘나들며 목적지까지의 경로를 결정하기 위한 논리 주소다. MAC은 구조가 없어 전체 인터넷에서 경로 계산이 불가능하지만, IP는 계층적 구조를 가져 라우터가 효율적으로 길을 찾을 수 있다. 그래서 실제 통신에서는 라우터는 IP로 방향을 정하고, 각 구간에서는 MAC으로 전달한다.
+
+**internet protocol**
+
+서로 다른 LAN/WAN은 기술(규칙)이 다르다. 프레임 형식, 속도, 주소 체계 등이 제각각이다. 그냥 비트만 보내면 서로 이해를 하지 못한다. 따라서, 다른 규칙들 위에 공통된 규칙을 얹는다. 이를 internet protocal 이라 한다. internet protocal의 역할은 크게 두 가지이다. 
+
+- Naming scheme (주소 체계 제공) : 모든 장치에 **IP 주소 같은 통일된 주소**를 부여한다. 각 호스트/라우터는 고유하게 식별된다. 
+
+- Delivery mechanism (전달 방식 제공) : 데이터를 packet(IP 패킷) 단위로 보낸다. 패킷 구조는 **Header**(출발지, 목적지, 크기 등 전달 정보)와 **Payload** (실제 데이터 비트) 를 포함한다. 
+
+다음 그림은 한 LAN에서 다른 LAN으로 데이터를 보낼 때 실제로 무슨 일이 일어나는지를 단계별로 보여준다.
+
+![image-20260423212636655](../../images/2025-11-11-systemprogram-16/image-20260423212636655.png)
+
+1. 클라이언트에서 데이터 생성
+
+- Host A에서 그냥 **data** 생성
+
+2. 프로토콜이 인터넷 패킷 만듦
+
+- data 앞에 **PH (IP 헤더)** 붙임. 이것이 **인터넷 패킷**
+
+- 그리고 LAN으로 보내기 위해 앞에 **FH1 (LAN1 프레임 헤더)** 추가
+
+3. LAN1을 통해 전송
+
+- 그냥 **LAN1 프레임** 형태로 이동
+
+4. 라우터 도착 → 프레임 벗김
+
+- 라우터는 FH1 제거 (LAN1용이니까 버림) **IP 헤더(PH)** 보고 다음 경로 결정
+
+5. LAN2로 보내기 위해 새 프레임 생성
+
+- LAN2에 맞게 **FH2 새로 붙임**(LAN마다 프레임 형식이 다르기 때문)
+
+6. LAN2 통해 이동
+
+- 이제 LAN2 규칙으로 전송
+
+7. 서버 도착 → 프레임 제거
+
+- FH2 제거
+
+8. 최종적으로 data 전달
+
+- 프로토콜이 PH 제거
+- 서버 애플리케이션에 **data 전달**
 
 
 
-# Socket API
+## Global IP Internet
 
-**getaddrinfo**
+internet과 Internet은 다르지만  internet protocol = Internet protocol = IP 이다. 
 
-```c
-int getaddrinfo(const char *node, const char *service, 
-                const struct addrinfo *hints, struct addrinfo **res);
-  
-struct addrinfo hints, *res;
+- **Global IP Internet** : 우리가 쓰는 internet의 대표적인 형태 = Internet
+  -  **TCP/IP** 프로토콜 집합 위에서 돌아간다
 
-memset(&hints, 0, sizeof(hints)); // memset은 구조체 내부 필드를 0으로 초기화하는 함수
-hints.ai_family = AF_INET;  // IPv4 only
-hints.ai_socktype = SOCK_STREAM; // TCP
+- **IP** : 주소 지정 + 패킷 전달 
 
-getaddrinfo("google.com", "80", &hints, &res);
-```
+  - **기본적인 주소 체계 제공** → IP 주소
 
-- socket open에 사용되는`addrinfo` 구조체 리스트를 반환한다. 이 구조체에는 도메인 이름에 대한 IP 주소가 저장된다. 리스트인 이유는 하나의 도메인 이름이 여러개의 IP 주소로 변환될 수 있기 때문이다. 
-- 함수
-  - `node` : 도메인 이름 또는 IP 문자열 
-  - `service` : 포트 번호 또는 서비스 이름
-  - `hints` : 검색 조건을 담는 구조체
-  - `res` : 리턴값은 연결 리스트 형태의 addrinfo 구조체이고 그 주소를 `res`가 가리킴.
-  - return : 연결 리스트 형태의 addrinfo 구조체
-- 내부 동작
-  - /etc/hosts 확인. 도메인이 hosts 파일에 있으면 DNS 안함.
-  - DNS 캐시 확인. 이미 DNS 조회한 적 있는 경우 캐시 사용.
-  -  필요하면 DNS Query 보냄. UDP(또는 TCP)로 DNS 서버에 요청 전송.
-  - DNS에서 받은 IP를 `struct addrinfo`로 포장함. 실제 내부적으로는 `struct sockaddr_in` 또는 `sockaddr_in6` 가 만들어짐.
-  - ![image-20251202175511749](../../images/2025-11-11-systemprogram-16/image-20251202175511749.png)
-- 끝나면 `freeaddrinfo` 를 호출하여 유저 heap에 생성된 모든 `addrinfo` 를 free 해야 함.
+  - **비신뢰성(unreliable)** → 그냥 보내기만 함.
+  - Host-to-host
 
-**socket**
+- **UDP** : 단순한 프로세스 간 전달
 
-```c
-int socket(int domain, int type, int protocal);
+  - IP 위에서 동작
+  - 여전히 **unreliable**
 
-int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-```
+- **TCP** : process-to-process + 신뢰성 보장
 
-- 커널에게 소켓을 만들어달라고 요청하는 시스템 콜 래퍼 함수. 소켓 = “네트워크용 파일 디스크립터(fd)” 이다. 커널이 내부적으로 소켓 객체를 만들고 그 소켓을 가리키는 정수(파일 디스크립터)를 반환한다.
-- 함수
-  - `domain` : 어떤 방식의 주소(IP, Unix domain 등)를 사용할 것인지
-    - `AF_INET` : IPv4 주소 체계
-    - `AF_INET6`: IPv6 주소 체계
-    - `AF_UNIX / AF_LOCAL` : 같은 시스템 내부 프로세스 간 통신 (Unix domain socket)
-    - `AF_PACKET` : 이더넷 레벨
-    - IPv4, IPv6 는 L3 단계에서 커널 코드가 IP 헤더를 붙이는 과정을 수행하는데, 어떤 방식의 주소 체계를 사용하느냐에 따라 이 패킷 포맷이 달라진다. `AF_UNIX` 를 쓰면 L4 단계에서 TCP/UDP 아님을 확인하고 Unix domain socket 자체 프로토콜을 사용한다. 
-  - `type` : 어떤 전송 방식을 쓸지 (TCP냐 UDP냐에 따라 패킷 구조가 다름)
-    - `SOCK_STREAM` : TCP
-    - `SOCK_DGRAM` : UDP
-  - `protocal` : 0으로 주면 커널에게 “타입에 맞는 기본 프로토콜(TCP/UDP)을 자동 선택하라”는 의미.
+  - reliable (신뢰성 있음)
+  - 재전송, 순서 보장, 중복 제거
+  - connection 기반 : 연결을 먼저 맺고 통신
 
-**bind**
+📝 **IP가 보낸다, TCP가 보낸다의 의미**
 
-```c
-int bind(int sockfd, const struct sockaddr *addr,
-        socklen_t addrlen);
-```
-
-- 내가 사용할 로컬 IP + 로컬 포트 번호를 지정하는 함수. 쉽게 말하면 "이 소켓은 앞으로 이 주소(=IP:PORT)로 들어오는 데이터를 받을게" 라고 운영체제에 등록하는 단계. 즉, **서버는 무조건 bind()가 필요**하지만 클라이언트는 대부분 필요 없음(커널이 자동으로 포트 선택).
-- listen()을 호출한 소켓(listening socket)은 클라이언트와 데이터 송수신을 할 수 없다. 그 소켓은 오직 **연결 대기(waiting)** 역할만 한다.
-- 함수
-  - `sockfd` : socket()으로 생성한 소켓 FD 
-  - `addr` : 어떤 IP/PORT에 묶을지 지정
-  - `addrlen` : addr의 크기
-
-**listen**
-
-```c
-int listen(int sockfd, int backlog);
-```
-
-- 1. TCP 소켓을 “수동 대기 상태(passive open)”로 전환 (커널이 이 소켓을 "서버 소켓"으로 인식하게 하기 위함)
-  2. 커널에 **connection queue** 만듦
-  3. 커널이 SYN 패킷을 처리할 수 있게 함
-     - listen() 호출 전에는 이 포트에 SYN 오면? → 연결 요청 무시 (RST)
-     - listen() 후에는 이 포트의 SYN 처리해줘 → SYN/ACK 보내고 큐에 넣어둠
-       ACK 오면 → accept queue로
-- 함수
-  - `sockfd` : socket() + bind()로 만든 TCP 소켓
-  - `backlog` : accept() 되기 전에 커널이 임시로 보관할 수 있는 연결 요청의 최대 수 (커널이 대기열(Queue)에 넣어둘 수 있는 연결 요청 수)
-
-
-
-📝 **SYN, 3-way handshake**
-
-TCP는 연결 지향 프로토콜이므로 통신하기 전에 반드시 서로 연결을 “설정(setup)”해야 한다. 
-
-이 과정이 **3-way handshake**이고 SYN은 여기서 사용된다. 
-
-SYN은 TCP 연결을 만들 때 사용되는 “연결 시작 패킷(flag)”이다. TCP 헤더의 "Flags" 필드 중 하나이다.
-
-1.  클라이언트 → 서버 (SYN)
-
-   - “나 너랑 연결하고 싶어”
-
-   - “내 시퀀스 번호는 X로 시작할게”
-
-2. 서버 → 클라이언트 (SYN + ACK)
-
-   - “좋아, 연결하자”
-   - “나도 내 시퀀스 번호 Y로 시작할게”
-   - “너가 보내준 번호 X 받았어(ACK)”
-
-3. 클라이언트 → 서버 (ACK)
-
-   - “너의 시퀀스 번호 Y 받았어”
-   - 연결 완료
-
-**3-way handshake**를 진행하는 동안 커널 내부에 두 개의 Queue가 필요하다.
-
-1. SYN Queue (Incomplete connection queue)
-   - 아직 handshake 끝나지 않은 “반쯤 열린 연결(SYN RECV 상태)” 저장
-
-2. Accept Queue (Completed connection queue)
-   - handshake 완료된 연결이 들어가는 큐. 여기서 accept()가 꺼내간다.
-
-**accept**
+다음과 같은 프로그램이 실행된다고 하자.
 
 ```c
-int accept(int sockfd, structure sockaddr *addr,
-           socklen_t *addrlen);
+send(sock, data, len, 0);
 ```
 
-- listen() 중인 소켓으로 들어온 클라이언트 연결 요청을 받아서, 통신 전용(connected) 소켓을 새로 만들어 반환하는 함수.
+1. CPU가 syscall 실행하여 user mode → kernel mode 전환이 이루어진다.
+2. TCP/UDP 프로토콜을 구현한 OS 코드에서 여러 작업.
+3. IP 프로토콜을 구현한 OS 코드에서 **목적지 IP 확인**, **라우팅 테이블 조회**, 어디로 보낼지 결정.
+4. Link 계층 OS 코드에서 패킷 완성
+5. OS 코드가 NIC 드라이버 호출하여 패킷을 NIC의 **DMA 버퍼**에 넣음
+6. NIC는 프레임을 읽고 전송 준비(유선 전송인 경우에는 케이블을 따라 전류/전기장 전달, 무선 전송인 경우에는 0/1을 전자기파 변조하여 공기 중으로 전송)
 
-  1. 3-way handshake가 **끝난 연결을 받아서** 커널의 accept queue에 저장된 연결을 꺼낸다. Queue에 pending connection이 없다면, connection이 들어올 때까지 기다린다. (blocking) 만약 listening socket을 non-blocking으로 설정하면, accept은 connection이 queue에 없을 시 기다리지 않고 즉시 -1을 리턴한다. 이렇게 accept을 non-blocking으로 한다면 언제 다시 accept을 시도해야할지 어떻게 알까? **epoll** 이라는 event system call을 사용한다. epoll은 어떤 event가 발생할 때까지 blocking 상태가 된다. 여기서는 listening socket이 readable 해지는 event를 모니터링 하도록 epoll을 call한다. 
+실제 네트워크 데이터는 `CPU → (커널 네트워크 스택) → NIC(랜카드) → 전기/전자기 신호`  흐름이다.
 
-  2. 새로운 소켓(conn_fd)을 생성한다. 리턴되는 fd는 listen_fd와 완전히 다른 소켓이다.
+따라서, IP로만 보낸다라는 표현은 IP가 데이터를 보내는 무슨 물리적 주체라는 뜻이 아니라, 위에서 step 2를 하지 않는다는 뜻이다. 
 
-  3. 클라이언트의 IP/Port 정보를 addr에 채워준다.
+📝 **Host-to-Host vs Process-to-process**
 
-- 함수
+- **Host-to-Host** : 컴퓨터 ↔ 컴퓨터 전송. IP는 내 노트북 → 서버까지 데이터를 보낸다. 
+- **Process-to-process** : 프로그램 ↔ 프로그램 전송. TCP/UDP는  내 브라우저 → 서버의 웹서버 프로그램으로 데이터를 보냄.
 
-  - `sockfd` : listen() 중인 소켓
-  - `addr` : 연결해온 클라이언트의 주소(IP, port)를 저장할 버퍼
-  - `addrlen` : 그 버퍼의 크기 (입력 & 출력)
-  - return : 클라이언트와 연결된 새로운 소켓 FD 
+**우리는 TCP “프로토콜 규칙”을 직접 구현해서 쓰는 게 아니라, 커널에 이미 구현된 TCP를 “socket API로 요청해서 사용한다.”** OS 커널이 이미 TCP를 다 구현해놓았기 때문에 socket API를 사용하면 된다. 
 
-**connect**
+지금까지의 논의를 요약하면 아래 그림과 같다.
 
-```c
-int connect(int sockfd, const struct sockaddr *addr,
-            socklen_t *addrlen);
-```
+![image-20260423220812662](../../images/2025-11-11-systemprogram-16/image-20260423220812662.png)
 
-- 클라이언트가 서버에게 TCP 연결을 요청하는 함수이며, TCP 3-way handshake를 시작하는 시스템 콜. `SYN` 패킷을 보내고, `SYN`+`ACK`를 blocking 상태로 기다린다. 마찬가지로 socket을 non-blocking으로 설정하면, write event를 set하여 해당 socket이 writable 해지면, connect이 established 되었음을 알게 된다. 
-- 함수
-  - `sockfd` : socket() 으로 만든 소켓 (클라이언트 쪽 소켓)
-  - `addr` : 연결할 대상(서버)의 주소 (IP + 포트)
-  - `addrlen` : addr 구조체 크기
+## Programmer's View of the Internet
 
-- 내부 동작
-  - 소켓을 `SYN_SENT` 상태로 전이
-  - SYN 패킷 생성
-  - 라우팅 테이블 확인해 next hop 결정
-  - ARP로 MAC 주소 획득
-  - NIC에 DMA로 전송 지시
+프로그래머 관점에서 인터넷을 어떻게 추상화해서 보는지를 생각해보자. 핵심은 복잡한 물리/네트워크 구조를 숨기고, 단순한 모델로 생각한다는 것이다. 
 
-**send / recv**
+- **Host → IP address 매핑**
 
-```c
-ssize_t send(int sockfd, const void *buf, size_t len
-            int flags);
-ssize_t recv(int sockfd, void *buf, size_t len,
-            int flags);
-```
+  - 인터넷에 연결된 모든 장치(컴퓨터, 서버 등)를 **host**라고 함
 
-- `send` : 커널에 “이 데이터를 TCP 소켓으로 보내라”고 요청하는 함수. 유저 버퍼의 데이터를 커널 send buffer로 복사하고 이후 커널 내부 TCP 스택이 복잡한 처리 과정을 거치고 최종적으로 NIC 드라이버가 패킷을 실제로 전송. send buffer가 가득 차면(상대가 데이터를 안 받아줌) block 될 수 있음. non-blocking 이라면, send buffer가 꽉 차 있으면 바로 -1 반환. 만약 send buffer에 100만큼 보내고 싶은데 70만큼의 공간만 있다면, 70만큼만 복사되고 70을 즉시 리턴함. send가 수행되었다고 전송이 된것이 아님. 그저 커널 버퍼로 복사 된 것일 뿐. 이후 전송은 TCP 커널 코드가 알아서 수행.
-- `recv` : 커널의 TCP receive buffer에 도착한 데이터를 사용자 버퍼로 가져오는 함수. 커널 TCP receive buffer 확인하여 받은 데이터가 있다면 `copy_to_user()`로 사용자 buf로 복사. 데이터가 없다면, 데이터가 도착할 때까지 wait queue에서 sleep. 이후, 데이터가 도착하면 NIC가 CPU에게 interrupt를 발생시키고, 커널의 인터럽트 핸들러로 진입하는데, 이 과정에서 실행되는 커널 네트워크 스택이 `wake_up()` 함수를 통해 wait queue를 깨운다.
-- 함수
-  - `flags` : recv에서 0일 경우, recv는 read와 동일.
-  - return : send는 보낸 데이터 수, recv는 받은 데이터 수.
-  
+  - 각 host는 IP 주소 라는 숫자로 식별됨. 예: `147.46.10.129`
+
+  - 현실에서는 수많은 라우터, 케이블, 스위치가 있지만, 프로그래머 입장에서는 그냥 **“이 컴퓨터 = 이 IP”** 이렇게 보면 됨
+
+- **IP address → Domain name 매핑 (DNS)** 
+
+  - 숫자는 사람이 기억하기 어려움, 그래서 **도메인 이름(domain name)**을 사용. 예: `www.snu.ac.kr`
+
+  - 이 둘은 서로 매핑됨
+
+  - 우리는 `www.snu.ac.kr` 입력하지만, 내부적으로는 DNS가 IP로 변환 → 실제 통신은 IP로 수행
+
+- **Process ↔ Process 통신 (Connection)** 
+
+  - 인터넷의 본질은 컴퓨터끼리 통신이 아니라 프로그램(프로세스)끼리 통신
+  - 예. 크롬(내 컴퓨터) ↔ 웹서버 프로그램(구글 서버)
+
+  - 이 통신은 **connection(연결)** 위에서 이루어짐
+    
+
+위 각각에 대해 조금 더 자세히 알아보자.
+
+**IP Address**
+
+- **IPv4 vs IPv6** : IPv4는 32비트 주소로 약 43억 개만 지원해 주소 부족 문제가 생겼고, 이를 해결하기 위해 128비트 주소를 사용하는 IPv6가 1996년에 도입되었지만, 기존 인프라와 비용 문제 때문에 2025년 현재도 인터넷 트래픽의 대부분은 여전히 IPv4 기반이며 IPv6는 점진적으로 확산 중인 상태이기 때문에, 실제 네트워크 프로그래밍에서는 두 프로토콜을 모두 지원하는 방식으로 코드를 작성하는 것이 중요하다. 현재는 기존 인프라가 IPv4 기반이 많아서 완전 교체 비용 커 NAT 같은 우회 기술로 버티는 중이다.
+- IPv4 주소는 실제로 사람이 보는 문자열이 아니라 32비트 정수로 `struct in_addr` 안의 `s_addr`에 저장되며, 네트워크에서는 모든 정수(IP 주소, 포트 등)를 **big-endian인 network byte order**로 통일하기 때문에 호스트(x86의 little-endian)에서 사용할 때는 변환이 필요하다; 예를 들어 `struct in_addr addr; addr.s_addr = htonl(0xC0A80001);`처럼 `htonl()`로 host → network 변환을 해서 `192.168.0.1`을 올바른 바이트 순서로 저장하고 전송하며, 반대로 수신 시에는 `ntohl()`로 다시 변환한다.
+
+- IPv4 주소는 실제로 32비트 정수로 저장되지만 사람이 읽기 쉽게 하기 위해 이를 1바이트씩 나눠 각각을 10진수로 바꾼 뒤 점(.)으로 구분한 **dotted decimal 형태(예: 128.2.194.242)**로 표현하며, 코드에서는 직접 비트를 나누지 않고 라이브러리 함수를 사용해 변환하는데 예를 들어 `struct in_addr addr; inet_pton(AF_INET, "128.2.194.242", &addr); char buf[INET_ADDRSTRLEN]; inet_ntop(AF_INET, &addr, buf, sizeof(buf));`처럼 문자열 ↔ 이진 형태 변환을 처리한다.
+
+**Domain Names**
+
+- ![image-20260423222249967](../../images/2025-11-11-systemprogram-16/image-20260423222249967.png)
+- 이 그림은 **도메인 이름(DNS)이 트리 구조로 계층적으로 구성되고, 최종적으로 IP 주소로 매핑되는 과정**을 보여준다. 최상단에는 이름이 없는 **루트(root)**가 있고, 그 아래에 `.com`, `.edu`, `.gov` 같은 **최상위 도메인(1단계)**이 있으며, 그 아래 `amazon`, `cmu`, `mit` 같은 **2단계 도메인**, 그리고 `www`, `cs`, `ece` 같은 **3단계(서브도메인)**이*이어지면서 `www.amazon.com → 176.32.98.166`처럼 최종적으로 특정 IP 주소로 연결된다. 즉, 도메인 이름은 사람이 기억하기 쉬운 이름을 계층적으로 관리하기 위한 구조이고, 실제 네트워크에서는 DNS가 이를 **IP 주소로 변환**하여 통신이 이루어진다.
+- DNS는 인터넷에서 **도메인 이름을 IP 주소로 변환해주는 전 세계에 분산된 데이터베이스 시스템**이며, 프로그래머 입장에서는 각 도메인과 IP의 매핑 정보를 담은 여러 host entry들의 집합으로 볼 수 있고, 하나의 도메인이 여러 IP를 가질 수도 있고 그 반대도 가능하다.
+
+**Internet Connections**
+
+클라이언트와 서버는 TCP 연결을 통해 **바이트 스트림을 주고받는데**, 이 연결은 두 프로세스를 직접 연결하는 **point-to-point**, 동시에 양방향 통신이 가능한 **full-duplex**, 그리고 순서대로 정확히 전달되는 **reliable**한 특성을 가진다. 이때 연결의 양 끝점을 **소켓(socket)**이라 하며 소켓은 **IP주소:포트번호**로 식별된다. 
+
+여기서 **포트(port)**는 프로세스를 구분하는 16비트 값으로, 클라이언트가 연결할 때 자동으로 할당되는 **ephemeral port**와, 웹 서버의 80번처럼 특정 서비스에 정해진 **well-known port**가 있다. 포트 정보는 PCB(Process Control Block)가 아니라 TCP 쪽 구조체에 저장된다. 
+
+호스트가 전달 받은 패킷에는 (src IP, src port, dst IP, dst port) 정보가 있고 커널은 이걸로 **소켓 테이블**을 조회하여 이미 연결된 TCP 가 있다면 해당 소켓 버퍼(recv buffer)로 데이터를 전달한다. 소켓은 특정 프로세스의 파일 디스크립터로, 프로세스가 `recv()` 호출해서 버퍼의 값을 읽는다.
+
+클라이언트에서 서버로 보내는 상황을 생각해보자. 클라이언트 포트 `51213`은 커널이 자동으로 할당한 **ephemeral port**, 서버 포트 `80`은 웹 서비스용 **well-known port**다. 이 구조 덕분에 같은 서버(80번 포트)에 동시에 여러 클라이언트가 접속해도 각각의 연결이 서로 구분되어 독립적으로 통신할 수 있다.
+
+![image-20260423223754672](../../images/2025-11-11-systemprogram-16/image-20260423223754672.png)
 
 
 
 
 
-![image-20251202230113638](../../images/2025-11-11-systemprogram-16/image-20251202230113638.png)
-
-
-
-![image-20251210054338214](../../images/2025-11-11-systemprogram-16/image-20251210054338214.png)
-
-
-
-// 11.25 강의 ~ 22분까지.
-
-chap 17 ppt 23 ~ 40

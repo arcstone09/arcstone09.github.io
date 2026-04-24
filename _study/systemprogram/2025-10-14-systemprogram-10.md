@@ -262,7 +262,7 @@ Strong/weak symbol을 만드는 방법은 다음과 같다.
 
 ![image-20260205155717870](../../images/2025-10-14-systemprogram-10/image-20260205155717870.png)
 
-## Step 1. Symbol Resolution
+## Linking
 
 프로그램 코드 상에서 모든 symbol 이름은 정의(defnition)될 때와 참조(reference)될 때 등장한다. 그리고 이에 대한 기록이 각 .o 파일에 섹션 영역과 symbol table에 저장되어 있다. Symbol Resolution은 모든 symbol reference를 정확히 하나의 symbol definition에 연결하는 과정이다.
 
@@ -278,19 +278,23 @@ Strong/weak symbol을 만드는 방법은 다음과 같다.
   - `-fno-common` 옵션을 쓰면 링킹 단계에서 COMMON 섹션에 기록되지 않고, strong이 2개이므로 중복 정의 오류가 생기므로 에러를 미리 찾을 수 있다.
 - strong 심볼이 있으면, weak 심볼은 **strong으로 재배치(relocate)**. 이것이 바로 예를들어 사용자가 lib.c의 특정 함수의 “default implementation을 제공하고, override 할 수 있는 이유이다. 
 
-아래 그림과 같이 linking.c, chksum.c를 컴파일 하고 각각의 오브젝트 파일의 심볼 테이블을 확인하면 다음과 같다.
+아래 그림과 같이 linking.c, chksum.c를 컴파일 하고 각각의 오브젝트 파일의 심볼 테이블을 확인하면 다음과 같다. (**아직 linking 전이다.**)
 
 ![E168032A-EFB2-4D7B-A64D-05ECAAE5B642](../../images/2025-10-14-systemprogram-10/E168032A-EFB2-4D7B-A64D-05ECAAE5B642.png)
 
-눈 여겨볼 것은 linking.c에서 외부 참조인 심볼 chksum, foo의 경우 symbol table의 Ndx가 UND로 나타난다는 점, 그리고 local인지 global 인지 여부에 따라 symbol들의 bind가 달라진다는 점이다.
+눈 여겨볼 것은 linking.c에서 외부 참조인 심볼 chksum, foo의 경우 symbol table의 Ndx가 UND로 나타난다는 점, 그리고 local인지 global 인지 여부에 따라 symbol들의 bind가 달라진다는 점이다. 
 
-이제 linking을 한 후 linking ELF파일의 섹션 헤더와 sym table을 보자. 
+이제 **linking을 한 후** linking ELF파일의 섹션 헤더와 sym table을 보자. 
 
 - 섹션 헤더에는 섹션에 대한 여러 메타데이터가 저장되어 있다. 
-  - 그 중, 섹션의 **가상**절대주소와(아래 .data의 0~04000) ELF 파일 내에서 각 섹션이 시작되는 파일 내부 위치 offset에 대한 정보도 담겨 있다.(아래 .data의 0~03000)
+  - 그 중, 섹션의 **가상**절대주소와(아래 .data의 0~04000) ELF 파일 내에서 각 섹션이 시작되는 파일 내부 위치 offset에 대한 정보도 담겨 있다.(아래 .data의 0~03000) 
 -  sym table의 value에는 다음의 값이 저장되어 있다. 
   - Relocatable .o 파일인 경우 : 해당 symbol이 속한 섹션(ex. .data)  기준의 (가상) 주소(offset)
   - Executable .o 파일인 경우 : 해당 symbol의 가상 절대 주소
+
+위  과정들이 어떻게 일어나는지를 순차적으로 알아보자. 
+
+## Step 1. Symbol Resolution
 
 ![11.RE.Linking.and.Loading 3](../../images/2025-10-14-systemprogram-10/11.RE.Linking.and.Loading 3.png)
 
@@ -309,23 +313,23 @@ Symbol Resolution을 통해서 링커는 이제
 
 - 누가 어느 섹션에 속하는지도 알고 있음
 
-Layout 과정을 통해서는, section header에서 section header에서 Address(각 섹션의 가상 절대 주소)와 section offset(ELF 파일 안에서의 위치 offset) 정해진다고 이해할 수 있다. 
+Layout 과정을 통해서는, section header에서 Address(각 **섹션**의 가상 절대 주소)와 section offset(ELF 파일 안에서의 위치 offset) 정해진다고 이해할 수 있다. 
 
 ![11.RE.Linking.and.Loading 3](../../images/2025-10-14-systemprogram-10/11.RE.Linking.and.Loading 3.png)
 
 ## Step3. Symbol Relocation
 
-- Layout 단계 이후에, 각 .o 파일의 sym tablem의 Value(섹션으로부터의 offset)을 이용해, 각 symbol의 통합된 offset을 계산하는 과정이 수행된다. (step 2.5)
+- Layout 단계 이후에, 각 .o 파일의 sym table의 Value(섹션으로부터의 offset)을 이용해, 각 symbol의 통합된 offset을 계산하는 과정이 수행된다. (step 2.5)
 - Step2에서 각 섹션의 가상 절대 주소 정보를 구했다.
 - Step1에서 각 symbol이 속하는 섹션을 구했다.
 
-Symbol Relocation 과정을 통해서는, symbol table에서 Value (가상 절대 주소)를 계산한다.
+Symbol Relocation 과정을 통해서는, symbol table에서 Value (**심볼**들의 가상 절대 주소)를 계산한다.
 
 - `symbol.Value` = `section.sh_addr` (step 2) + `symbol.offset` (step 2.5)
 
 ![11.RE.Linking.and.Loading 3](../../images/2025-10-14-systemprogram-10/11.RE.Linking.and.Loading 3.png)
 
-그리고 코드/데이터 내 주소 참조를 패치한다. 예를 들어, `int *p = &x;` 라는 코드에 대해 지금까지 한 일은, p라는 symbol의 가상 절대 주소를 정한 것이다. 그렇다면 symbol p가 가지는 값 (= symbol x의 가상 절대 주소)은 어디에 어떻게 저장될까?
+그리고 **코드/데이터 내 주소 참조를 패치**한다. 예를 들어, `int *p = &x;` 라는 코드에 대해 지금까지 한 일은, p라는 symbol의 가상 절대 주소를 정한 것이다. 그렇다면 symbol p가 가지는 값 (= symbol x의 가상 절대 주소)은 어디에 어떻게 저장될까?
 
 다음 예시를 보자.
 
@@ -350,7 +354,7 @@ call instruction은 jump할 주소의 계산인자로 pc-relative offset 값을 
 
 ![11.RE.Linking.and.Loading 4](../../images/2025-10-14-systemprogram-10/11.RE.Linking.and.Loading 4.png)
 
-즉, `call foo`가 아니라 `call foo@PLT` 로 assembly를 작성한다. **PLT** 란, Procedure Linkage Table로, ELF 파일에 .plt 섹션이 존재한다. 컴파일러는 처음부터 PLT를 경유할 것을 전제로 assembly를 만든다. 실제 `foo`의 주소는 지금까지 본 것처럼 링킹(정적 링킹을 사용하는 경우)/로딩(동적 링킹을 사용하는 경우) 후에야 결정된다. 
+즉, `call foo`가 아니라 `call foo@PLT` 로 assembly를 작성한다. **PLT** 란, Procedure Linkage Table로, ELF 파일에 .plt 섹션이 존재한다. 컴파일러는 처음부터 PLT를 경유할 것을 전제로 assembly를 만든다. 실제 `foo`의 주소는 지금까지 본 것처럼 링킹(정적 링킹을 사용하는 경우)후에야 결정된다. (**PLT는 동적 링킹에서만 이용하는데 이에 대해서는 밑의 PIC 코드에서 알아본다**)
 
 위 파일의 .o 파일(머신코드)를 보면 다음과 같다. 
 
@@ -780,8 +784,6 @@ LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH ./vectormath
 
 
 
-
-
 **Run-time linking** (**Manually Loading Shared Libraries**)
 
 - **프로그램이 이미 실행 중인데**, 그 도중에 라이브러리를 “나중에” 불러서 연결한다.
@@ -837,7 +839,7 @@ Runtime Linking 과정을 요약하면 다음과 같다.
      addvec = dlsym(handle, "addvec");
      ```
 
-   - `dlsym` : 라이브러리 내부의 특정 함수 주소를 찾아줌, 문자열 이름으로 검색함
+   - `dlsym` : 라이브러리 내부의 특정 함수 주소(가상절대주소)를 찾아줌, 문자열 이름으로 검색함
 
    - 라이브러리는 실행 중에 로드되기 때문에 컴파일 시점에는 함수의 주소를 모른다. 그래서 함수 포인터를 선언하고,
 
@@ -898,47 +900,189 @@ Runtime Linking 과정을 요약하면 다음과 같다.
 
 ![image-20260208171204072](../../images/2025-10-14-systemprogram-10/image-20260208171204072.png)
 
+# Position Independent Code
+
+지금까지 우리는 개념적으로, linking (혹은 공유라이브러리를 사용하는 경우 load time 또는 runtime 에서) 코드가 최종적으로 가상절대주소를 가지고 있다고 생각했다.
+
+예를 들어, 아래와 같은 코드가 있다고 가정해보자.
+
+```c
+int x = 10;
+
+int main() {
+    return x;
+}
+```
+
+컴파일 단계를 거쳐 `mov eax, [0x601040]   ; x가 있는 주소` 이렇게 가상 절대주소가 정해진다고 해보자. 이 코드는 “x는 무조건 가상 절대주소 0x601040에 있다”는 가정을 바탕에 두고 있게 된다. 그러나, 실제로는 실행전까지는 프로그램이 메모리에 어느 가상주소에 올라갈지 알 수 없다. 이론적으로는 모든 프로세스에서 라이브러리를 항상 **같은 가상주소**에 배치하는 식의 방법이 가능할 것 같다. 그러나 이는 현실적으로 여러 이유에서 불가능하다. 
+
+한 가지 이유는 런타임 링킹을 사용하는 경우에 프로그램 시작 전까지는 런타임 링킹되는 함수의 절대 가상주소를 미리 알 수 없기 때문이다.
+
+다른 중요한 이유는 ASLR (보안) 이 깨진다는 점이다. ASLR은 프로그램이 실행될 때마다 메모리 가상주소를 랜덤하게 바꾸는 기술이다. 즉, 즉, 코드(.text), 라이브러리(.so), 스택, 힙의 **가상주소 위치를 매번 다르게 배치**한다. 그렇지 않았을 때 생기는 보안 위험의 사례는 아래와 같다. 
+
+- `system()` 은 인자로 주어진 쉘 명령어를 수행하는 C 라이브러리 함수이다. 
+
+- 공격자가 이 `system` 함수의 고정된 가상절대주소를 알고 있다고 해보자. 예를 들어, `0x7ffff7e12345` 
+
+- ```c
+  void vuln() {
+      char buf[8];
+      gets(buf);   // 위험!
+  }
+  ```
+
+- 위와 같은 코드에서 공격자가 8 byte 이상을 입력하여 buffer overflow를 유발하면 뒤에 있던 함수의 return address가 메모리상에 덮어 씌워진다. 이 덮어씌우는 값을 system 함수의 가성 절대주소 `0x7ffff7e12345` 로 놓으면, vuln 함수가 리턴되면서 `system` 함수가 실행되고, 또한 공격자가 적절한 스택 위치에 `"/bin/sh"` 문자열을 넣어놓았다면, `system("/bin/sh")` 가 실행되어 공격자가 쉘을 획득하게 된다. 
+
+**PIC** (Position Independent Code)는 메모리 가상주소가 바뀌어도 언제나 실행 가능하도록 만든 코드이다. 변수/함수 접근할 때 절대 가상 주소를 사용하는 대신, 상대 가상주소를 사용한다. (e.g. `mov rax, [rip + 0x20]` ) 그렇게 컴파일-링킹 되는 것이다.
+
+아래는 PIC의 예시이다.
+
+![image-20260423174211190](../../images/2025-10-14-systemprogram-10/image-20260423174211190.png)
+
+PIC가 제대로 동작하려면 코드가 어디에 로드되든 offset이 그대로 유지되어야 하는데 그러려면  **코드와 데이터가 같이 이동** 해야 한다. 즉, `.text` (코드), `.data`, `.bss` (데이터)의 **상대적 거리**가 유지되어야 한다는 뜻이다. 그래서 링커가 `.text`, `.data`, `.bss`를 한 덩어리로 이동시킨다.
+
+동적 링킹을 사용하는 경우에, PIC + shared library가 실제로 어떻게 함수 호출을 처리하는지 알아보자.
+
+- **PLT** : Program Linkage Table
+  - 함수 호출용 중간 점프 코드
+  - .text 섹션에 존재
+- **GOT** : Global Offset Table
+  - 진짜 함수 주소 저장하는 테이블
+  - .data 섹션에 존재
+- **Dynamic Linker** 
+  - 실행 시 함수 실제 주소 찾아서 GOT에 써줌
+
+다음은 동적 링킹을 사용하는 경우에 런타임에 일어나는 일을 순서대로 정리한 것이다. 
+
+![image-20260423174520279](../../images/2025-10-14-systemprogram-10/image-20260423174520279.png)
+
+1. `call lib1func@plt`
+   - 프로그램이 `lib1func()`를 호출한다. 하지만 실제 함수 주소는 모름 → **PLT[2]로 감** ([2]로 가도록 링커가 설정)
+
+2. `jmp *GOT[4]` 
+
+   - `PLT[2]` 의 내부 첫 줄이다. `GOT[4]`를 통해 점프를 시도한다. 
+   - 근데 처음이라 `GOT[4]` 에는 진짜 함수 주소가 아직 없다. 그래서, 다시 PLT[2]의 다음줄로 리턴된다.
+
+3. ```c
+   push function ID
+   jmp PLT[0]
+   ```
+
+   - “이 함수 누구냐?”를 넘기기 위해 function ID push (스택에 함수 인자 전달하는 것처럼)
+   - 공통 처리 루틴(`PLT[0]`)으로 이동
+
+4. ```c
+   PLT[0]:
+       push GOT[1]
+       jmp *GOT[2]
+   ```
+
+   - `GOT[1]` = relocation 정보 위치 push (스택에 함수 인자 전달하는 것처럼)
+   - `GOT[2]` = dynamic linker 주소. 즉, dymalic linker 가 실행된다.
+
+5. Dynamic 링커는 3에서 전달된 function ID 인자를 이용하여 로드된 공유 라이브러리 목록을 돌면서 해당 ELF 파일에서 
+   `lib1func`라는 심볼의 주소를 (가상 상대 주소) 찾는다.(로드 타임 링킹의 경우 이미 첫 함수 호출 전에 프로그램이 시작할 때 공유 라이브러리는 이미 로더에 의해 로드되어 있다. 또한, ELF에 주소가 등록되어 있다. 런타임 링킹의 경우에도 개발자에 의해 사용되는 라이브러리 함수의 주소가 ELF에 등록되어 있다.) 그리고 그 값을 4에서 전달된 relocation entry 주소 인자를 이용하여 `GOT[1]` 즉, relocation entry에 저장해놓는다.
+
+6. Dynamic 링커는 `GOT[4]` 에 실제 libfunc1의 가상상대주소를 적어 놓는다. 
+
+7. 그리고 libfunc1으로 점프하고 유저 모드로 복귀한다. 
+
+외부 함수를 두 번째로 호출한 경우, 이제는 dynamic 링커를 통하지 않는다. 
+
+![image-20260423185126499](../../images/2025-10-14-systemprogram-10/image-20260423185126499.png)
+
+1. 함수 호출
+1. `jmp *GOT[4]` . 실제 lib1func의 주소가 이제는 저장되어 있어 jump 가능
+1. lib1func 실행
+1. 복귀
 
 
 
+## Library Interpositioning
+
+Library Interpositioning 이란 프로그램이 어떤 함수(예: `malloc`, `printf`, `open`)를 호출할 때 **원래 함수 대신 내가 만든 함수를 실행하게 하는 기술**이다. 컴파일, 링크, 로드, 런타임 시점에 모두 가능하다. 
+
+- Compile time 
+
+  - 소스 코드에서 직접 함수 정의를 바꿔버린다.
+
+  - ```c
+    #define malloc my_malloc
+    ```
+
+- Linking time
+
+  - 여러 object 파일을 합칠 때 **같은 이름의 함수가 있으면 내가 만든 걸 우선 사용**
+
+  - ```c
+    gcc mymalloc.o main.o
+    ```
+
+  - `mymalloc.o`에 malloc 정의하면 → libc보다 우선됨
+
+- Load / Run time
+
+  - 프로그램 실행할 때 **동적 링커(ld.so)**가 함수 주소를 결정
+
+  - 이때 가로채기 가능
+
+  - ```bash
+    LD_PRELOAD=./mylib.so ./program
+    ```
+
+    - 프로그램이 `malloc()` 호출
+    - 동적 링커가 먼저 `mylib.so`에서 찾음
+    - 있으면 그걸 사용
+    - 없으면 libc 사용
 
 
 
+![image-20260423190604972](../../images/2025-10-14-systemprogram-10/image-20260423190604972.png)
+
+![image-20260423190636730](../../images/2025-10-14-systemprogram-10/image-20260423190636730.png)
 
 
 
+![image-20260423190930144](../../images/2025-10-14-systemprogram-10/image-20260423190930144.png)
+
+![image-20260423190948349](../../images/2025-10-14-systemprogram-10/image-20260423190948349.png)
+
+```bash
+gcc -Wl,--wrap,malloc -Wl,--wrap,free \
+    -o hello1 hello.c mymalloc.o
+```
+
+- `-Wl` : 이 옵션은 컴파일러가 아니라 **링커(ld)**에게 전달한다는 뜻
+-  `--wrap=malloc` : 링커에게 다음 규칙 전달
+  - `malloc → __wrap_malloc` : 프로그램에서 `malloc()` 호출하면 실제로는 `__wrap_malloc()` 호출됨
+  - `__real_malloc → malloc` : 우리가 코드에서 `__real_malloc()` 호출하면 진짜 libc의 malloc으로 연결됨
 
 
 
+![image-20260423191016740](../../images/2025-10-14-systemprogram-10/image-20260423191016740.png)
 
+![image-20260423191030101](../../images/2025-10-14-systemprogram-10/image-20260423191030101.png)
 
+- `LD_PRELOAD="/usr/lib64/libdl.so ./mymalloc.so" ./hellor` : 프로그램 실행 전에 특정 .so를 강제로 먼저 로드
 
+  - `hellor` 안에서 `malloc()`을 부르면 원래는 libc의 `malloc`을 찾는다. 그런데 `LD_PRELOAD`를 쓰면 동적 링커가:
 
+    - preload된 라이브러리들을 먼저 메모리에 올리고
+    - 심볼(`malloc`)을 찾을 때 그것들을 먼저 본다.
 
+    - 그래서 `./mymalloc.so` 안에 `malloc`이라는 이름의 함수가 있으면 그게 먼저 잡힌다.
+    - `/usr/lib64/libdl.so`를 같이 넣은 이유는 `mymalloc.so` 안에서 `dlsym()`을 쓰니까, 그 함수가 들어있는 라이브러리도 필요하다. 그래서 `libdl.so`를 같이 preload한 것이다. 이 때 순서를 반드시 지켜야 한다. 
 
+- 소스 코드에서 `mallocp = dlsym(RTLD_NEXT, "malloc");` 에서  `dlsym` 은 동적 링커에게 함수 주소 물어보는 함수이고, `RTLD_NEXT`은 “현재 라이브러리 다음에 있는 malloc 찾아줘” 라는 뜻이다. 즉, "내가 가로챈 malloc 말고, 원래 malloc 주소 줘" 라는 뜻이다. 
 
+- shared library가 먼저 로드되면 이 함수가 “진짜 malloc 대신” 호출된다.
 
+- 위 코드의 실행 흐름은 다음과 같다.
 
-
-# 
-
-
-
-
-
-- why linkers? (10장 12,13 pg)
-
-
-
-
-
-
-
-
-
-프로그램이 프로세스로서 실행되면
-
-os 코드에 의해 RAM메모리로 코드가 적재되고 명령어의 절대 가상주소가 확정됨.
-
-CPU에서 한줄씩 명령어를 읽어와 수행함.
-
+- ```scss
+  (1) 우리가 만든 malloc 실행 # LD_PRELOAD에 의해
+  (2) 내부에서 진짜 malloc 호출 # dlsym에 의해
+  (3) 결과 출력
+  (4) 반환
+  ```
