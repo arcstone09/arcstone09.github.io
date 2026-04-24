@@ -15,7 +15,7 @@ In this post, 07~08 System Programming lecture is introuduced.
 
 # Variable & Virtual Memory
 
-
+<a href=https://arcstone09.github.io/study/2025-06-21-ca-1> 여기 </a> 참조.
 
 
 
