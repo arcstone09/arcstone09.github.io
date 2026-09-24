@@ -8,6 +8,4 @@ author_profile: true
 {% include base_path %}
 
 
-{% for post in site.snack %}
-  {% include archive-single.html %}
-{% endfor %}
+{% include paginated-collection.html posts=site.snack per_page=12 %}

@@ -8,6 +8,4 @@ author_profile: true
 {% include base_path %}
 
 
-{% for post in site.project %}
-  {% include archive-single.html %}
-{% endfor %}
+{% include paginated-collection.html posts=site.project per_page=12 %}

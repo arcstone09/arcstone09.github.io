@@ -4,6 +4,7 @@
 
 .archive {
   margin-bottom: 2em;
+  max-width: 900px;
 
   @include breakpoint($medium) {
     @include span(12 of 12);
@@ -30,7 +31,7 @@
 .archive__subtitle {
   margin: 1.414em 0 0;
   padding-bottom: 0.5em;
-  font-size: $type-size-5;
+  font-size: 1.15rem;
   color: mix(#fff, $gray, 25%);
   border-bottom: 1px solid $border-color;
 
@@ -40,8 +41,20 @@
 }
 
 .archive__item-title {
-  margin-bottom: 0.25em;
+  margin: 0 0 0.35em;
+  font-size: 1.2rem;
+  line-height: 1.4;
   font-family: $sans-serif-narrow;
+
+  a {
+    color: $text-color;
+    text-decoration: none;
+
+    &:hover {
+      color: $link-color;
+      text-decoration: none;
+    }
+  }
 
   a + a {
     opacity: 0.5;
@@ -58,11 +71,23 @@
 }
 
 .archive__item-excerpt {
-  margin-top: 0;
-  font-size: $type-size-6;
+  margin: 0.55em 0 0;
+  color: mix(#fff, $text-color, 15%);
+  font-size: 0.92rem;
+  line-height: 1.7;
 
   & + p {
     text-indent: 0;
+  }
+}
+
+.archive__item .page__date {
+  margin: 0.25em 0 0;
+  color: $gray;
+  font-size: 0.8rem;
+
+  strong {
+    font-weight: 500;
   }
 }
 
@@ -79,9 +104,6 @@
     box-shadow: 0 0 10px rgba(#000, 0.25);
   }
 
-  .archive__item-title {
-    text-decoration: underline;
-  }
 }
 
 
@@ -90,6 +112,17 @@
    ========================================================================== */
 
 .list__item {
+  padding: 1.35em 0 1.45em;
+  border-bottom: 1px solid $border-color;
+
+  &:first-child {
+    padding-top: 0.75em;
+  }
+
+  &:last-child {
+    border-bottom: 0;
+  }
+
   @include breakpoint($medium) {
     padding-right: $right-sidebar-width-narrow;
   }

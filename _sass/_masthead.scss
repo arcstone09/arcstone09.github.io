@@ -15,11 +15,12 @@
   -webkit-animation-delay: 0.15s;
           animation-delay: 0.15s;
   z-index: 20;
+  box-shadow: 0 1px 8px rgba(#0f172a, 0.035);
 
   &__inner-wrap {
     @include container;
     @include clearfix;
-    padding: 1em 1em 1em;
+    padding: 0.95em 1em;
     font-family: $sans-serif-narrow;
 
     @include breakpoint($x-large) {

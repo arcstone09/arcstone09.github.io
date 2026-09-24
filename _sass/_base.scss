@@ -13,7 +13,10 @@ body {
   padding-bottom: 9em;
   color: $text-color;
   font-family: $global-font-family;
-  line-height: 1.5;
+  line-height: 1.7;
+  letter-spacing: -0.012em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 
   &.overflow--hidden {
     /* when primary navigation is visible, the content in the background won't scroll */
@@ -22,35 +25,36 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  margin: 2em 0 0.5em;
-  line-height: 1.2;
+  margin: 2.2em 0 0.65em;
+  line-height: 1.35;
   font-family: $header-font-family;
   font-weight: bold;
 }
 
 h1 {
   margin-top: 0;
-  font-size: $type-size-3;
+  font-size: 2rem;
 }
 
 h2 {
-  font-size: $type-size-4;
+  font-size: 1.5rem;
 }
 
 h3 {
-  font-size: $type-size-5;
+  font-size: 1.25rem;
 }
 
 h4 {
-  font-size: $type-size-6;
+  font-size: 1.125rem;
 }
 
 h5 {
-  font-size: $type-size-6;
+  font-size: 1rem;
 }
 
 h6 {
-  font-size: $type-size-6;
+  font-size: 0.875rem;
+  color: $gray;
 }
 
 small, .small {
@@ -58,7 +62,7 @@ small, .small {
 }
 
 p {
-  margin-bottom: 1.3em;
+  margin-bottom: 1.5em;
 }
 
 u,
@@ -93,11 +97,12 @@ abbr[data-original-title] {
 /* blockquotes */
 
 blockquote {
-  margin: 2em 1em 2em 0;
-  padding-left: 1em;
-  padding-right: 1em;
-  font-style: italic;
-  border-left: 0.25em solid $primary-color;
+  margin: 2em 0;
+  padding: 0.9em 1.15em;
+  color: mix(#fff, $text-color, 18%);
+  background: #f8fafc;
+  border-left: 0.25em solid mix(#fff, $primary-color, 28%);
+  border-radius: 0 $border-radius $border-radius 0;
 
   cite {
     font-style: italic;
@@ -164,7 +169,7 @@ hr {
 
 ul li,
 ol li {
-  margin-bottom: 0.5em;
+  margin-bottom: 0.55em;
 }
 
 li ul,
