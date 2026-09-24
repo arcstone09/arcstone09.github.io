@@ -14,8 +14,8 @@ $indent-var                 : 1.3em;
 
 /* system typefaces */
 $serif                      : Georgia, Times, serif;
-$sans-serif                 : -apple-system, ".SFNSText-Regular", "San Francisco", "Roboto", "Segoe UI", "Helvetica Neue", "Lucida Grande", Arial, sans-serif;
-$monospace                  : Monaco, Consolas, "Lucida Console", monospace;
+$sans-serif                 : -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+$monospace                  : "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 
 /* sans serif typefaces */
 $sans-serif-narrow          : $sans-serif;
@@ -43,13 +43,13 @@ $type-size-7                : 0.6875em; // ~11px
 $type-size-8                : 0.625em;  // ~10px
 
 /* masthead properties */
-$masthead-height            : 50px;
+$masthead-height            : 64px;
 
 /*
    Colors
    ========================================================================== */
 
-$gray                       : #7a8288;
+$gray                       : #64748b;
 $dark-gray                  : mix(#000, $gray, 40%);
 $darker-gray                : mix(#000, $gray, 60%);
 $light-gray                 : mix(#fff, $gray, 50%);
@@ -57,12 +57,12 @@ $lighter-gray               : mix(#fff, $gray, 90%);
 
 $body-color                 : #fff;
 $background-color           : #fff;
-$code-background-color      : #fafafa;
+$code-background-color      : #f6f8fa;
 $code-background-color-dark : $light-gray;
-$text-color                 : $dark-gray;
-$border-color               : $lighter-gray;
+$text-color                 : #26313f;
+$border-color               : #e2e8f0;
 
-$primary-color              : #7a8288;
+$primary-color              : #2563eb;
 $success-color              : #62c462;
 $warning-color              : #f89406;
 $danger-color               : #ee5f5b;
@@ -96,11 +96,11 @@ $xing-color                 : #006567;
 
 
 /* links */
-$link-color                 : $info-color;
+$link-color                 : #1677a6;
 $link-color-hover           : mix(#000, $link-color, 25%);
 $link-color-visited         : mix(#fff, $link-color, 25%);
-$masthead-link-color        : $primary-color;
-$masthead-link-color-hover  : mix(#000, $primary-color, 25%);
+$masthead-link-color        : #475569;
+$masthead-link-color-hover  : $primary-color;
 
 
 /*

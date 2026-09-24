@@ -1,0 +1,8 @@
+<div class="js-paginated-list" data-page-size="{{ include.per_page | default: 12 }}">
+  {% assign sorted_posts = include.posts | sort: "date" | reverse %}
+  {% for post in sorted_posts %}
+    {% include archive-single.html %}
+  {% endfor %}
+</div>
+
+<nav class="pagination collection-pagination" aria-label="글 목록 페이지" hidden></nav>

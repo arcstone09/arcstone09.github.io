@@ -61,18 +61,25 @@
   @include clearfix();
   margin-top: 1em;
   padding-top: 1em;
+  display: flex;
+  justify-content: center;
+  gap: 0.35rem;
 
   ul {
     margin: 0;
     padding: 0;
     list-style-type: none;
     font-family: $sans-serif;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.35rem;
   }
 
   li {
     display: block;
     float: left;
-    margin-left: -1px;
+    margin-left: 0;
 
     a {
       margin-bottom: 0.25em;
@@ -85,7 +92,7 @@
       text-decoration: none;
       color: mix(#fff, $gray, 25%);
       border: 1px solid $light-gray;
-      border-radius: 0;
+      border-radius: 999px;
 
       &:hover {
         color: $link-color-hover;
@@ -123,17 +130,17 @@
   /* next/previous buttons */
   &--pager {
     display: block;
-    padding: 1em 2em;
+    padding: 0.9em 1.2em;
     float: left;
     width: 50%;
     font-family: $sans-serif;
-    font-size: $type-size-5;
+    font-size: 0.92rem;
     font-weight: bold;
     text-align: center;
     text-decoration: none;
     color: mix(#fff, $gray, 50%);
     border: 1px solid $light-gray;
-    border-radius: $border-radius;
+    border-radius: 8px;
 
     &:hover {
       color: $link-color-hover;
@@ -155,6 +162,42 @@
       pointer-events: none;
       cursor: not-allowed;
     }
+  }
+}
+
+.collection-pagination[hidden] {
+  display: none;
+}
+
+.collection-pagination__button {
+  min-width: 2.5rem;
+  padding: 0.55rem 0.8rem;
+  color: $gray;
+  font: inherit;
+  font-weight: 600;
+  background: #fff;
+  border: 1px solid $border-color;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: $global-transition;
+
+  &:hover:not(:disabled),
+  &[aria-current="page"] {
+    color: #fff;
+    background: $primary-color;
+    border-color: $primary-color;
+  }
+
+  &:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+}
+
+@include breakpoint(max-width $small) {
+  .pagination--pager {
+    padding: 0.8em 0.65em;
+    font-size: 0.82rem;
   }
 }
 

@@ -5,7 +5,7 @@
 #main {
   @include container;
   @include clearfix;
-  margin-top: 2em;
+  margin-top: 2.75em;
   padding-left: 1em;
   padding-right: 1em;
   animation: intro 0.3s both;
@@ -36,7 +36,9 @@
 
 .page__title {
   margin-top: 0;
-  line-height: 1;
+  margin-bottom: 0.55em;
+  line-height: 1.25;
+  letter-spacing: -0.03em;
 
   & + .page__meta {
     margin-top: -0.5em;
@@ -49,19 +51,47 @@
 }
 
 .page__content {
-  
-  text-align: justify;
-  text-align-last: left;
-  
-  /* 추가 */
-  line-height: 1.4;          /* 줄 간격 */
-  letter-spacing: -0.04em;         /* 자간 줄이기 */
-  word-spacing: -0.02em;           /* 단어 간격 줄이기 */
-  text-justify: inter-character;  /* 글자 벌어짐 방지 */
+  max-width: 860px;
+  text-align: left;
+  line-height: 1.82;
+  letter-spacing: -0.012em;
+  overflow-wrap: anywhere;
+
+  > :first-child {
+    margin-top: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    scroll-margin-top: calc(#{$masthead-height} + 1.5rem);
+  }
+
+  h1 {
+    font-size: 1.9rem;
+  }
 
   h2 {
-    padding-bottom: 0.5em;
+    margin-top: 2.5em;
+    padding-bottom: 0.4em;
+    font-size: 1.5rem;
     border-bottom: 1px solid $border-color;
+  }
+
+  h3 {
+    margin-top: 2.2em;
+    font-size: 1.27rem;
+  }
+
+  h4 {
+    margin-top: 2em;
+    font-size: 1.12rem;
+  }
+
+  h5 {
+    font-size: 1rem;
+  }
+
+  h6 {
+    font-size: 0.9rem;
   }
 
   p, li, dl {
@@ -70,7 +100,7 @@
 
   /* paragraph indents */
   p {
-    margin: 0 0 $indent-var;
+    margin: 0 0 1.55em;
 
     /* sibling indentation*/
     @if $paragraph-indent == true {
@@ -82,7 +112,9 @@
   }
 
   a {
-    text-decoration: underline;
+    text-decoration-line: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 0.18em;
 
     &:hover {
       text-decoration: underline;
@@ -97,6 +129,22 @@
     margin-top: 1em;
     font-family: $sans-serif;
     font-weight: bold;
+  }
+
+  ul, ol {
+    margin-top: 0.75em;
+    margin-bottom: 1.6em;
+    padding-left: 1.5em;
+  }
+
+  img {
+    border-radius: 8px;
+  }
+
+  table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
   }
 
   dd {
@@ -236,9 +284,9 @@
 
 .page__meta {
   margin-top: 2em;
-  color: mix(#fff, $gray, 25%);
+  color: $gray;
   font-family: $sans-serif;
-  font-size: $type-size-6;
+  font-size: 0.82rem;
 
   p {
     margin: 0;

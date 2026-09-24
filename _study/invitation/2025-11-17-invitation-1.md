@@ -12,7 +12,7 @@ In this post, On-Campus Company Info Session of Asteromorph is introduced.
 
 
 
-# 
+# Asteromorph
 
 지금까지 ai는 ai가 동작하는지 ai core에 관한것. 챗지피티로 증명됨.
 
