@@ -8,6 +8,7 @@ import { api, hasToken, saveToken, practiceHost, rankedURL } from './api.js';
 import { rankedLink, rankedEntry, restoreRankedSession } from './ranked-navigation.js';
 import { readChallenge, challengeURL, challengeParams, SHARE_ORIGIN } from './challenge.js';
 import { shareCard } from './share-card.js';
+import { setupAdmin } from './admin.js';
 
 const $ = id => document.getElementById(id);
 let model=null, game=null, result=null, worker=null, generation=0, pending=null, animation=null, watchdog=null;
@@ -59,6 +60,7 @@ function syncControls() {
 }
 function refreshSettings() {
   const s=settings();
+  $('ranking-policy').hidden=mode!=='ranking';
   $('challenge-banner').hidden=!challenge||mode!=='practice';
   if(challenge)$('challenge-banner').textContent=t('challengeIntro',{score:challenge.score.toFixed(1),n:challenge.n,p:challenge.p,time:challenge.duration});
   $('probability-help').textContent=t('probabilityHelp',{ones:Number.isFinite(s.p*s.length)?format(s.p*s.length):'—'});
@@ -72,6 +74,7 @@ function refreshSettings() {
     out.addEventListener('click',async()=>{try{await api('logout',{});user=null;refreshSettings();}catch{toast('networkError');}});
     $('mode-help').append(document.createElement('br'),out);
     const manage=document.createElement('button');manage.type='button';manage.className='text-button';manage.textContent=t('securityTitle');manage.onclick=()=>$('security').showModal();$('mode-help').append(manage);
+    if(user.isAdmin){const admin=document.createElement('button');admin.type='button';admin.className='text-button';admin.textContent=t('adminTitle');admin.onclick=openAdmin;$('mode-help').append(admin);}
   }
   if(!game) render(true);
   syncControls();
@@ -157,7 +160,7 @@ function render(force=false){
   }
 }
 async function start(){
-  syncControls();if($('start').disabled||$('reference').open||$('account').open||$('security').open||$('recovery-display').open)return;
+  syncControls();if($('start').disabled||$('admin').open||$('reference').open||$('account').open||$('security').open||$('recovery-display').open)return;
   if(mode==='ranking'&&practiceHost){location.assign(rankedLink(rankedURL,document.documentElement.dataset.theme,getLanguage()));return;}
   if(mode==='ranking'&&!user){$('account-status').textContent='';$('account').showModal();return;}
   if(mode==='ranking'){
@@ -201,7 +204,7 @@ function applySequence(raw){
 $('apply-paste').addEventListener('click',()=>applySequence($('paste-input').value));
 $('sequence').addEventListener('paste',event=>{event.preventDefault();applySequence(event.clipboardData.getData('text'));});
 document.addEventListener('keydown',event=>{
-  if($('reference').open||$('account').open||$('security').open||$('recovery-display').open||event.metaKey||event.ctrlKey||event.altKey||event.isComposing)return;
+  if($('admin').open||$('reference').open||$('account').open||$('security').open||$('recovery-display').open||event.metaKey||event.ctrlKey||event.altKey||event.isComposing)return;
   if(editable(event.target))return;
   if(event.key==='Enter'&&(event.target instanceof HTMLButtonElement||event.target instanceof HTMLElement&&event.target.tagName==='SUMMARY'))return;
   if(['0','1','Backspace','Enter'].includes(event.key))event.preventDefault();
@@ -313,7 +316,7 @@ $('account-form')?.addEventListener('submit',async event=>{
   $('account-form').querySelectorAll('button').forEach(b=>b.disabled=true);
   try{
     const response=await api(action,{username:$('username').value,password:$('password').value,recoveryCode:$('recovery-code').value});
-    user={username:response.username};$('password').value='';$('recovery-code').value='';$('account').close();refreshSettings();$('start').focus();if(response.recoveryCode)showRecovery(response.recoveryCode);
+    user={username:response.username,isAdmin:response.isAdmin};$('password').value='';$('recovery-code').value='';$('account').close();refreshSettings();$('start').focus();if(response.recoveryCode)showRecovery(response.recoveryCode);
   }catch(error){$('account-status').textContent=errorText(error.code);}
   finally{$('account-form').querySelectorAll('button').forEach(b=>b.disabled=false);}
 });
@@ -358,6 +361,7 @@ function drawLeaderboard(){
 document.querySelectorAll('[data-period]').forEach(b=>b.addEventListener('click',()=>{period=b.dataset.period;void loadLeaderboard();}));
 $('refresh-ranking').addEventListener('click',()=>void loadLeaderboard());
 setInterval(()=>{if(!document.hidden)void loadLeaderboard();},60000);
+const openAdmin=setupAdmin(()=>void loadLeaderboard());
 relocalize();void prepare();void loadLeaderboard();
 if(!practiceHost&&entry.ranked&&!challenge)document.querySelector('[data-mode="ranking"]').click();
 if(hasToken())void restoreRankedSession({

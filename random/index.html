@@ -39,6 +39,7 @@
             <button type="button" data-mode="ranking" aria-pressed="false" data-i18n="ranked"></button>
           </div>
           <p class="field-help mode-help" id="mode-help"></p>
+          <p class="field-help" id="ranking-policy" data-i18n="rankingPolicy" hidden></p>
           <div class="setting-group probability-group">
             <label for="probability"><span data-i18n="probability"></span><span class="mono">p</span></label>
             <div class="number-field"><input id="probability" type="number" min="0" max="1" step="any" value="0.5" inputmode="decimal" required aria-describedby="probability-help"></div>
@@ -104,6 +105,18 @@
     
   </dialog>
   <dialog id="recovery-display" aria-labelledby="recovery-title"><h2 id="recovery-title" data-i18n="recoveryCode"></h2><p data-i18n="saveRecovery"></p><div class="code-block"><code id="issued-code"></code></div><button id="copy-recovery" class="secondary-button" data-i18n="copy"></button><button id="close-recovery" class="start-button" data-i18n="savedRecovery"></button></dialog>
+  <dialog id="admin" aria-labelledby="admin-title">
+    <div class="dialog-header"><h2 id="admin-title" data-i18n="adminTitle"></h2><button id="close-admin" type="button" class="secondary-button" data-i18n="close"></button></div>
+    <div class="account-form">
+      
+      <p id="admin-status" role="status"></p>
+      <section id="admin-target" hidden><h3 id="admin-target-title"></h3><p data-i18n="adminHelp"></p>
+        <div class="table-wrap"><table><thead><tr><th data-i18n="adminSelect"></th><th data-i18n="score"></th><th data-i18n="adminRecorded"></th></tr></thead><tbody id="admin-scores"></tbody></table></div>
+        <button id="admin-more" type="button" class="secondary-button" data-i18n="adminMore" hidden></button>
+        
+      </section>
+    </div>
+  </dialog>
   <div class="toast" id="toast" role="status" hidden></div>
 </body>
 </html>

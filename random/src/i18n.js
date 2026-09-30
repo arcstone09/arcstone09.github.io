@@ -1,4 +1,11 @@
 const messages = {
+  rankingPolicy:['사이트에서 제공하는 예시 수열을 그대로 복사·붙여넣기하여 제출한 기록은 관리자가 랭킹에서 제외합니다. 예시 수열은 연습 모드에서 체험해 주세요.','Submissions that copy and paste the site’s example sequence unchanged will be removed from the leaderboard by the administrator. Please try the example in practice mode.'],
+  adminTitle:['관리자','Administration'],adminTarget:['조회할 아이디','Player username'],adminSearch:['조회','Find player'],adminSelect:['선택','Select'],adminRecorded:['기록 시각','Submitted'],adminMore:['다음 50개 기록','Next 50 records'],
+  adminHelp:['개별 기록을 삭제하면 해당 유저의 다음 최고 점수가 랭킹에 나타날 수 있습니다. 모든 기록 삭제는 계정을 유지하며, 이후 새 플레이는 가능합니다.','Deleting one score may reveal the player’s next best score. Deleting all scores keeps the account and allows future play.'],
+  adminConfirm:['대상 아이디를 다시 입력','Type the target username again'],adminPassword:['관리자 본인의 현재 비밀번호','Your current administrator password'],adminReason:['삭제 사유 (필수)','Reason (required)'],
+  adminWarning:['삭제는 되돌릴 수 없습니다. 계정 삭제는 모든 점수와 로그인 세션도 삭제합니다. 캐시로 인해 랭킹 반영에 약 1분이 걸릴 수 있습니다.','Deletion cannot be undone. Deleting an account also deletes all its scores and sessions. Cached rankings may take about a minute to update.'],
+  adminDeleteScore:['선택한 기록 삭제','Delete selected score'],adminDeleteScores:['이 유저의 모든 점수 삭제','Delete all player scores'],adminDeleteUser:['계정 삭제','Delete account'],
+  adminAsk:['{username} — {action}\n영구 삭제를 진행할까요?','{username} — {action}\nPermanently delete?'],adminDone:['삭제했습니다.','Deleted.'],adminChoose:['삭제할 점수 기록을 먼저 선택하세요.','Select a score to delete first.'],adminNotFound:['아이디 또는 기록을 찾을 수 없습니다.','Player or score not found.'],adminForbidden:['관리자 권한이 필요하거나 보호된 계정입니다.','Administrator access is required, or this account is protected.'],adminInvalid:['대상 아이디·선택 기록·삭제 사유를 확인해 주세요.','Check the target username, selected score and reason.'],
   shareResult:['결과 공유','Share Result'],copyChallenge:['도전 링크 복사','Copy challenge link'],saveCard:['결과 카드 저장','Save result card'],shareDone:['도전 링크를 복사했습니다.','Challenge link copied.'],shareFailed:['공유하지 못했습니다. 아래 링크를 복사해 주세요.','Sharing failed. Copy the link below.'],
   shareChallenge:['내 무작위 점수를 넘을 수 있나요?','Can you beat my randomness score?'],
   simulationScore:['Monte Carlo 기준 점수 · 유저 순위 아님','Monte Carlo score · not a player rank'],
