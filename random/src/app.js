@@ -5,7 +5,9 @@ import { referenceHTML } from './reference.js';
 
 const $ = id => document.getElementById(id);
 let model = null, game = null, worker = null, generation = 0, pending = null, animation = null, workerWatchdog = null;
-const cells = Array.from({ length: 100 }, () => {
+let mode = 'practice';
+const EXAMPLE_SEQUENCE = '1010011001010110110010000101111000110110100101100111010010010110001000101011111110110000000010101101';
+const cells = Array.from({ length: 1000 }, () => {
   const cell = document.createElement('span');
   cell.className = 'bit-cell'; cell.textContent = '·'; cell.setAttribute('aria-hidden', 'true');
   $('sequence').append(cell); return cell;
@@ -18,6 +20,10 @@ function validSettings() {
     validateP($('probability').valueAsNumber);
     const seconds = $('duration').valueAsNumber;
     if (!Number.isInteger(seconds) || seconds < 1 || seconds > 600) throw new Error('제한시간은 1~600 사이의 정수(초)로 설정하세요.');
+    const length = $('sequence-length').valueAsNumber;
+    if (!Number.isInteger(length) || length < 1 || length > 1000) throw new Error('수열 길이는 1~1000 사이의 정수로 설정하세요.');
+    if (mode === 'ranking' && length !== 100) throw new Error('랭킹 모드는 100 bit로만 플레이할 수 있습니다.');
+    if (mode === 'ranking' && !/^[A-Za-z0-9_-]{2,20}$/.test($('player-id').value.trim())) throw new Error('랭킹 모드 아이디는 영문·숫자·_- 2~20자로 입력하세요.');
     $('validation').textContent = '';
     return true;
   } catch (error) { $('validation').textContent = error.message; return false; }
@@ -25,7 +31,7 @@ function validSettings() {
 
 function updateStart() {
   const valid = validSettings();
-  $('start').disabled = !valid || !model || model.p !== $('probability').valueAsNumber || game?.status === 'playing';
+  $('start').disabled = !valid || (mode === 'ranking' && (!model || model.p !== $('probability').valueAsNumber)) || game?.status === 'playing';
 }
 
 async function prepare() {
@@ -110,9 +116,32 @@ document.querySelectorAll('[data-p]').forEach(button => button.addEventListener(
   $('probability').dispatchEvent(new Event('input'));
 }));
 $('duration').addEventListener('input', () => { updateStart(); if (!game) render(); });
+$('sequence-length').addEventListener('input', () => { updateStart(); if (!game) render(); });
+$('player-id').addEventListener('input', updateStart);
+document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => {
+  mode = button.dataset.mode;
+  document.querySelectorAll('[data-mode]').forEach(item => { const selected = item.dataset.mode === mode; item.classList.toggle('selected', selected); item.setAttribute('aria-pressed', String(selected)); });
+  const ranking = mode === 'ranking';
+  $('identity-group').hidden = !ranking;
+  $('sequence-length').value = ranking ? 100 : ($('sequence-length').value || 100);
+  $('sequence-length').disabled = ranking;
+  updateStart();
+}));
+$('theme-toggle').addEventListener('click', () => { const light = document.body.classList.toggle('light-theme'); $('theme-toggle').setAttribute('aria-pressed', String(light)); localStorage.setItem('binary-lab-theme', light ? 'light' : 'dark'); });
+$('language-toggle').addEventListener('click', () => {
+  const english = document.documentElement.lang !== 'en';
+  document.documentElement.lang = english ? 'en' : 'ko';
+  $('language-toggle').textContent = english ? '한' : 'EN';
+  $('setup-heading').textContent = english ? 'Game setup' : '게임 설정';
+  document.querySelector('[data-mode="practice"]').textContent = english ? 'Practice' : '연습 모드';
+  document.querySelector('[data-mode="ranking"]').textContent = english ? 'Ranking' : '랭킹 모드';
+  $('reference-button').textContent = english ? 'How it works' : '게임 개발 참고';
+  $('leaderboard-heading').textContent = english ? 'Leaderboard' : '랭킹';
+});
+if (localStorage.getItem('binary-lab-theme') === 'light') { document.body.classList.add('light-theme'); $('theme-toggle').setAttribute('aria-pressed', 'true'); }
 
 function setLocked(locked) {
-  ['probability', 'duration'].forEach(id => $(id).disabled = locked);
+  ['probability', 'duration', 'sequence-length', 'player-id'].forEach(id => $(id).disabled = locked || (id === 'sequence-length' && mode === 'ranking'));
   document.querySelectorAll('[data-p]').forEach(button => button.disabled = locked);
   ['zero', 'one', 'delete', 'paste-input'].forEach(id => $(id).disabled = !locked);
   document.body.classList.toggle('is-playing', locked);
@@ -121,11 +150,11 @@ function setLocked(locked) {
 function start() {
   updateStart();
   if ($('start').disabled || $('reference').open) return;
-  game = createGame($('duration').valueAsNumber, performance.now());
+  game = createGame($('duration').valueAsNumber, performance.now(), $('sequence-length').valueAsNumber);
   $('results').hidden = true;
   setLocked(true); $('start').disabled = true;
   $('start').innerHTML = '진행 중';
-  $('input-hint').textContent = '100번째 입력에서 자동으로 종료됩니다.';
+  $('input-hint').textContent = `${game.length}번째 입력에서 자동으로 종료됩니다.`;
   document.activeElement?.blur();
   render();
   animation = requestAnimationFrame(tick);
@@ -153,9 +182,12 @@ function render() {
   const bits = game?.bits || [];
   $('count').textContent = bits.length;
   $('progress').setAttribute('aria-valuenow', bits.length);
-  $('progress-fill').style.width = `${bits.length}%`;
+  $('progress').setAttribute('aria-valuemax', game?.length || $('sequence-length').valueAsNumber || 100);
+  $('progress-fill').style.width = `${Math.min(100, bits.length / (game?.length || 100) * 100)}%`;
   $('sequence').setAttribute('aria-label', `입력 ${bits.length}개: ${bits.join(' ') || '없음'}`);
+  $('sequence').style.setProperty('--sequence-columns', game?.length > 200 ? '40' : '20');
   cells.forEach((cell, i) => {
+    cell.hidden = i >= (game?.length || Number($('sequence-length').value) || 100);
     cell.textContent = i < bits.length ? bits[i] : i === bits.length && game?.status === 'playing' ? '_' : '·';
     cell.className = `bit-cell${i < bits.length ? ' filled' : ''}${bits[i] === 1 ? ' one' : ''}${i === bits.length && game?.status === 'playing' ? ' next' : ''}`;
   });
@@ -178,7 +210,12 @@ $('paste-input').addEventListener('input', event => {
   }
   const remaining = 100 - game.bits.length;
   compact.slice(0, remaining).split('').forEach(bit => act(Number(bit)));
-  if (compact.length > remaining) $('input-hint').textContent = '100개가 입력되어 나머지 문자는 무시했습니다.';
+  if (compact.length > remaining) $('input-hint').textContent = `${game?.length || 100}개가 입력되어 나머지 문자는 무시했습니다.`;
+});
+$('copy-example').addEventListener('click', async () => {
+  try { await navigator.clipboard.writeText(EXAMPLE_SEQUENCE); $('copy-example').textContent = '✓ 복사됨'; }
+  catch { $('paste-input').value = EXAMPLE_SEQUENCE; $('copy-example').textContent = '수열을 선택해 복사하세요'; }
+  setTimeout(() => { $('copy-example').textContent = '▣ 예시 100-bit 복사'; }, 1800);
 });
 document.addEventListener('keydown', event => {
   if ($('reference').open || event.metaKey || event.ctrlKey || event.altKey || event.isComposing) return;
@@ -209,6 +246,21 @@ function histogram(index, observed) {
   const bars = buckets.map((count, i) => `<rect class="hist-bar" x="${16 + i * 10}" y="${83 - count / peak * 57}" width="8" height="${count / peak * 57}" rx="1"/>`).join('');
   return `<svg viewBox="0 0 330 110" role="img" aria-label="${[...FEATURES, ...DIAGNOSTICS][index].label} 귀무분포 히스토그램, 관측값 ${format(observed)}"><title>밝은 세로선: 관측값 ${format(observed)}. 막대: Monte Carlo 빈도.</title>${bars}<line class="hist-marker" x1="${x}" x2="${x}" y1="18" y2="86"/><circle cx="${x}" cy="15" r="3" fill="#d3ff94"/><text class="hist-axis" x="16" y="103">${format(low)}</text><text class="hist-axis" x="315" y="103" text-anchor="end">${format(high)}</text></svg>`;
 }
+function rankingRecords() { try { return JSON.parse(localStorage.getItem('binary-lab-ranking') || '[]'); } catch { return []; } }
+function saveRanking(score) {
+  if (mode !== 'ranking') return;
+  const id = $('player-id').value.trim(), now = Date.now();
+  const records = rankingRecords();
+  const existing = records.find(item => item.id === id);
+  if (existing) { existing.score = Math.max(existing.score, score); existing.updated = now; } else records.push({ id, score, updated: now });
+  localStorage.setItem('binary-lab-ranking', JSON.stringify(records)); renderLeaderboard('24h');
+}
+function renderLeaderboard(period = document.querySelector('.leaderboard-tabs .selected')?.dataset.period || '24h') {
+  const now = Date.now(), spans = { '24h': 86400000, week: 604800000, month: 2592000000, all: Infinity };
+  const rows = rankingRecords().filter(item => now - item.updated <= spans[period]).sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, 20);
+  $('leaderboard-list').innerHTML = rows.length ? rows.map((item, i) => `<li><span>${i + 1}</span><b>${item.id}</b><strong>${item.score.toFixed(1)}</strong></li>`).join('') : '<li class="empty-ranking">아직 이 브라우저에 기록이 없습니다.</li>';
+}
+document.querySelectorAll('[data-period]').forEach(button => button.addEventListener('click', () => { document.querySelectorAll('[data-period]').forEach(item => item.classList.toggle('selected', item === button)); renderLeaderboard(button.dataset.period); }));
 function finish() {
   cancelAnimationFrame(animation);
   setLocked(false);
@@ -220,9 +272,12 @@ function finish() {
   $('input-hint').textContent = '입력이 종료되었습니다. 아래에서 결과를 확인하세요.';
   $('results').hidden = false;
   if (game.status === 'timeout') {
-    $('results').innerHTML = `<div class="result-top"><div><h2 id="result-heading">시간이 종료되었습니다</h2><div class="score timeout-score">${game.bits.length}<span> / 100 bits</span></div></div><div class="result-actions">${retryHTML()}</div></div><p class="result-copy">100개를 완성하지 못해 정식 Randomness Score를 계산하지 않았습니다. 입력한 수열은 위에서 확인할 수 있습니다.</p><p class="result-meta">p = ${model.p} · 제한시간 ${game.duration}초</p>`;
+    $('results').innerHTML = `<div class="result-top"><div><h2 id="result-heading">시간이 종료되었습니다</h2><div class="score timeout-score">${game.bits.length}<span> / ${game.length} bits</span></div></div><div class="result-actions">${retryHTML()}</div></div><p class="result-copy">제한시간이 끝났습니다. 입력한 수열을 확인하고 다시 시도해 보세요.</p><p class="result-meta">${mode === 'ranking' ? `랭킹 모드 · p = ${model.p}` : '연습 모드'} · 제한시간 ${game.duration}초</p>`;
+  } else if (mode === 'practice' || game.length !== 100) {
+    $('results').innerHTML = `<div class="result-top"><div><h2 id="result-heading">연습 완료</h2><div class="score timeout-score">${game.bits.length}<span> / ${game.length} bits</span></div></div><div class="result-actions">${retryHTML()}</div></div><p class="result-copy">연습 모드는 점수를 기록하지 않습니다. 길이와 입력 리듬을 바꿔 다시 연습해 보세요.</p>`;
   } else {
     const result = evaluate(game.bits, model);
+    saveRanking(result.score);
     const all = [...FEATURES, ...DIAGNOSTICS], values = [...result.t, ...result.extra];
     const rows = all.map((feature, i) => {
       const expected = feature.expectation ? feature.expectation(model.p) : model.diagnosticMeans[i];
@@ -257,3 +312,4 @@ $('reference').addEventListener('click', event => { if (event.target === $('refe
   if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) $('reference').close();
 } });
 refreshSettings(); prepare();
+renderLeaderboard();

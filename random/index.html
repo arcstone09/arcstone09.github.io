@@ -9,14 +9,14 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23c4f578'/%3E%3Ctext x='8' y='44' font-size='38' font-family='monospace'%3E01%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="./src/style.css">
   <style>
-    .paste-label{display:block;font-size:14px;color:#b4b4b4;margin:0 0 6px}.paste-input{display:block;width:100%;min-height:52px;resize:vertical;background:#202020;border:1px solid #666;border-radius:4px;color:#f0f0eb;font:14px/1.5 'IBM Plex Mono',monospace;padding:9px 10px}.paste-input::placeholder{color:#888}.paste-input:disabled{opacity:.55}.paste-help{font-size:13px;color:#b4b4b4;margin:6px 0 12px}
+    .sequence-grid{grid-template-columns:repeat(var(--sequence-columns,20),minmax(0,1fr))}
   </style>
   <script type="module" src="./src/app.js"></script>
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="./" aria-label="Binary Lab 홈"><span class="brand-icon" aria-hidden="true">01</span>Binary Lab</a>
-    <button class="text-button" id="reference-button">게임 개발 참고</button>
+    <div class="top-actions"><button class="text-button" id="language-toggle" type="button">EN</button><button class="text-button" id="theme-toggle" type="button" aria-pressed="false">☼</button><button class="text-button" id="reference-button">게임 개발 참고</button></div>
   </header>
   <main>
     <section class="intro">
@@ -27,6 +27,8 @@
       <aside class="setup-panel" aria-labelledby="setup-heading">
         <h2 id="setup-heading">게임 설정</h2>
         <form id="settings" novalidate>
+          <div class="mode-switch" role="group" aria-label="플레이 모드"><button type="button" class="mode-button selected" data-mode="practice" aria-pressed="true">연습 모드</button><button type="button" class="mode-button" data-mode="ranking" aria-pressed="false">랭킹 모드</button></div>
+          <div class="setting-group identity-group" id="identity-group" hidden><label for="player-id">아이디</label><div class="number-field"><input id="player-id" type="text" maxlength="20" autocomplete="nickname" placeholder="랭킹에 표시할 아이디"></div><p class="field-help">중복되지 않는 아이디를 입력하세요.</p></div>
           <div class="setting-group">
             <label for="probability">1이 나올 확률 <span class="mono">p</span></label>
             <div class="number-field"><input id="probability" type="number" min="0" max="1" step="any" value="0.5" inputmode="decimal" required aria-describedby="probability-help"></div>
@@ -38,6 +40,7 @@
             <div class="number-field"><input id="duration" type="number" min="1" max="600" step="1" value="45" inputmode="numeric" required aria-describedby="duration-help"><span>초</span></div>
             <p class="field-help" id="duration-help">1~600초 사이에서 설정하세요.</p>
           </div>
+          <div class="setting-group length-group"><label for="sequence-length">수열 길이</label><div class="number-field"><input id="sequence-length" type="number" min="1" max="1000" step="1" value="100" inputmode="numeric"><span>bit</span></div><p class="field-help">연습 모드에서 1~1000 bit</p></div>
           <div class="start-group">
             <div class="calibration-state" id="calibration-state" role="status">준비 중…</div>
             <p id="validation" class="error" role="alert"></p>
@@ -58,6 +61,7 @@
         <label class="paste-label" for="paste-input">01 수열 붙여넣기</label>
         <textarea id="paste-input" class="paste-input" rows="2" disabled placeholder="100개의 0과 1을 붙여넣으세요." aria-describedby="paste-help"></textarea>
         <p class="paste-help" id="paste-help">공백·줄바꿈은 무시합니다. 0과 1만 입력하세요.</p>
+        <button type="button" class="copy-example" id="copy-example" title="예시 수열 복사" aria-label="예시 수열 복사">▣ 예시 100-bit 복사</button>
         <div class="keypad">
           <button class="bit-key" id="zero" disabled aria-label="0 입력"><span>0</span></button>
           <button class="bit-key" id="one" disabled aria-label="1 입력"><span>1</span></button>
@@ -66,6 +70,7 @@
       </section>
     </div>
     <section id="results" class="results" hidden aria-labelledby="result-heading" tabindex="-1"></section>
+    <section class="leaderboard" id="leaderboard" aria-labelledby="leaderboard-heading"><div class="leaderboard-heading"><h2 id="leaderboard-heading">랭킹</h2><span>랭킹 모드 100 bit</span></div><div class="leaderboard-tabs"><button class="selected" data-period="24h">24시간</button><button data-period="week">이번 주</button><button data-period="month">이번 달</button><button data-period="all">전체</button></div><ol id="leaderboard-list"><li class="empty-ranking">아직 이 브라우저에 기록이 없습니다.</li></ol><p class="ranking-note">현재 정적 사이트에서는 기록을 이 브라우저에 저장합니다. 여러 사용자 간 공유 랭킹은 쓰기 가능한 서버 연결이 필요합니다.</p></section>
     <footer>Bernoulli(p) 모형과 비교하는 100-bit 게임</footer>
   </main>
   <dialog id="reference" aria-labelledby="reference-title">
