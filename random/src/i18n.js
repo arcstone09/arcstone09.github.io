@@ -1,4 +1,9 @@
 const messages = {
+  shareResult:['결과 공유','Share Result'],copyChallenge:['도전 링크 복사','Copy challenge link'],saveCard:['결과 카드 저장','Save result card'],shareDone:['도전 링크를 복사했습니다.','Challenge link copied.'],shareFailed:['공유하지 못했습니다. 아래 링크를 복사해 주세요.','Sharing failed. Copy the link below.'],
+  shareChallenge:['내 무작위 점수를 넘을 수 있나요?','Can you beat my randomness score?'],
+  simulationScore:['Monte Carlo 기준 점수 · 유저 순위 아님','Monte Carlo score · not a player rank'],
+  challengeIntro:['친구의 점수 {score} / 100에 도전 · n={n}, p={p}, {time}초. 시작하기를 누르세요.','Beat a shared score of {score} / 100 · n={n}, p={p}, {time}s. Press Start game.'],
+  challengeWin:['공유된 점수 {score}점을 넘었습니다!','You beat the shared score of {score}!'],challengeTie:['공유된 점수 {score}점과 같은 표시 점수입니다.','You tied the displayed shared score of {score}.'],challengeTry:['공유된 목표 점수는 {score}점입니다. 다시 도전해 보세요.','The shared target is {score}. Try again!'],
   secureRank:['랭킹·로그인은 보안 전용 사이트에서 진행됩니다.','Ranked play and sign-in open on the isolated secure site.'],
   securityTitle:['계정 보안','Account security'],securityHelp:['비밀번호 변경·복구 코드 발급에는 현재 비밀번호가 필요합니다. 비밀번호 변경 시 모든 기기에서 로그아웃됩니다.','Current password is required to change your password or issue a recovery code. Changing your password signs out all devices.'],
   newPassword:['새 비밀번호 (10~128자)','New password (10–128 characters)'],changePassword:['비밀번호 변경','Change password'],logoutAll:['전체 기기 로그아웃','Sign out all devices'],

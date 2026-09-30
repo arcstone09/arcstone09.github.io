@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#141414">
   <meta name="description" content="Binary Lab — compare your binary sequence with an independent Bernoulli model.">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; connect-src 'self' https://arcstone09-random.basket032402.chatgpt.site; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; connect-src 'self' https://arcstone09-random.basket032402.chatgpt.site; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://arcstone09-random.basket032402.chatgpt.site; object-src 'none'; base-uri 'none'; form-action 'self'">
   <meta name="referrer" content="no-referrer">
   <title>Binary Lab — Can You Fake Random?</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23c4f578'/%3E%3Ctext x='8' y='44' font-size='38' font-family='monospace'%3E01%3C/text%3E%3C/svg%3E">
@@ -29,6 +29,7 @@
   </header>
   <main>
     <section class="intro"><h1 lang="en">Can You Fake Random?</h1><p data-i18n="intro"></p></section>
+    <p id="challenge-banner" class="challenge-banner" hidden></p>
     <div class="workspace">
       <aside class="setup-panel" aria-labelledby="setup-heading">
         <h2 id="setup-heading" data-i18n="setup"></h2>
@@ -97,10 +98,10 @@
   </main>
   <dialog id="reference" aria-labelledby="reference-title"><div class="dialog-header"><h2 id="reference-title" data-i18n="reference"></h2><button id="close-reference" class="secondary-button" data-i18n="close"></button></div><div id="reference-content"></div></dialog>
   <dialog id="account" aria-labelledby="account-title"><div class="dialog-header"><h2 id="account-title" data-i18n="accountTitle"></h2><button id="close-account" class="secondary-button" data-i18n="close"></button></div>
-
+    
   </dialog>
   <dialog id="security" aria-labelledby="security-title"><div class="dialog-header"><h2 id="security-title" data-i18n="securityTitle"></h2><button id="close-security" class="secondary-button" data-i18n="close"></button></div>
-
+    
   </dialog>
   <dialog id="recovery-display" aria-labelledby="recovery-title"><h2 id="recovery-title" data-i18n="recoveryCode"></h2><p data-i18n="saveRecovery"></p><div class="code-block"><code id="issued-code"></code></div><button id="copy-recovery" class="secondary-button" data-i18n="copy"></button><button id="close-recovery" class="start-button" data-i18n="savedRecovery"></button></dialog>
   <div class="toast" id="toast" role="status" hidden></div>

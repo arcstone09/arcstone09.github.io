@@ -3,7 +3,7 @@ import { stored, persist } from './i18n.js';
 const origin = location.hostname === 'arcstone09.github.io' ? 'https://arcstone09-random.basket032402.chatgpt.site' : '';
 export const practiceHost=!!origin;
 export const rankedURL='https://arcstone09-random.basket032402.chatgpt.site/api/play#ranked';
-if(location.hostname==='arcstone09-random.basket032402.chatgpt.site'&&location.pathname!=='/api/play')location.replace('/api/play'+location.hash);
+if(location.hostname==='arcstone09-random.basket032402.chatgpt.site'&&location.pathname!=='/api/play')location.replace('/api/play'+location.search+location.hash);
 // Remove the previous JavaScript-readable credential. Never migrate it to a cookie.
 persist('binary-lab-session',null);
 export function saveToken() { persist('binary-lab-session',null); }

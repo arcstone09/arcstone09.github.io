@@ -190,3 +190,10 @@ details h4{font-size:16px;margin:20px 0 8px}
   .period-tabs{width:100%}.period-tabs button{padding:9px 5px;font-size:13px}
 }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+:root .challenge-banner { padding: 16px 20px; border-left: 4px solid var(--accent); background: var(--panel); font-size: 16px; }
+.share-result { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, .8fr); gap: 24px; padding: 24px 0; border-bottom: 1px solid var(--border, #666); margin-bottom: 24px; }
+.share-result img { width: 100%; height: auto; border-radius: 10px; background: #141414; }
+.share-controls { display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 12px; min-width: 0; }
+.share-controls input { width: 100%; min-width: 0; box-sizing: border-box; font-size: 14px; padding: 12px; }
+.share-controls p { margin: 0; font-size: 14px; }
+@media (max-width: 640px) { .share-result { grid-template-columns: minmax(0, 1fr); gap: 16px; } }

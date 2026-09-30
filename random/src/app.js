@@ -6,6 +6,8 @@ import { resultHTML, format } from './results.js';
 import { t, both, getLanguage, setLanguage, localize, errorText, stored, persist } from './i18n.js';
 import { api, hasToken, saveToken, practiceHost, rankedURL } from './api.js';
 import { rankedLink, rankedEntry, restoreRankedSession } from './ranked-navigation.js';
+import { readChallenge, challengeURL, challengeParams, SHARE_ORIGIN } from './challenge.js';
+import { shareCard } from './share-card.js';
 
 const $ = id => document.getElementById(id);
 let model=null, game=null, result=null, worker=null, generation=0, pending=null, animation=null, watchdog=null;
@@ -14,12 +16,19 @@ let practiceSettings={p:.5,length:100,duration:45}, cells=[], drawnBits=null;
 let period='24h', leaderboard=null, rankingState='loading', rankingRequest=0;
 let submission='idle', submissionError=null, roundId=null, toastTimer=null;
 const entry=rankedEntry(location.hash);
+const query=new URLSearchParams(location.search);
+const challenge=query.get('challenge')==='1'?readChallenge(query):null;
 if(!practiceHost&&entry.ranked){
   if(entry.theme)persist('binary-lab-theme',entry.theme);
   if(entry.language)persist('binary-lab-language',entry.language);
   history.replaceState(null,'',location.pathname+location.search+'#ranked');
 }
 setLanguage(!practiceHost&&entry.language||stored('binary-lab-language','ko'));
+if(challenge){
+  setLanguage(challenge.language);
+  practiceSettings={p:challenge.p,length:challenge.n,duration:challenge.duration};
+  $('probability').value=challenge.p;$('sequence-length').value=challenge.n;$('duration').value=challenge.duration;
+}
 document.documentElement.dataset.theme=(!practiceHost&&entry.theme||stored('binary-lab-theme','dark'))==='light'?'light':'dark';
 document.querySelector('meta[name="theme-color"]').content=document.documentElement.dataset.theme==='dark'?'#141414':'#f5f5f0';
 const settings=()=>({p:$('probability').valueAsNumber,length:$('sequence-length').valueAsNumber,duration:$('duration').valueAsNumber});
@@ -50,6 +59,8 @@ function syncControls() {
 }
 function refreshSettings() {
   const s=settings();
+  $('challenge-banner').hidden=!challenge||mode!=='practice';
+  if(challenge)$('challenge-banner').textContent=t('challengeIntro',{score:challenge.score.toFixed(1),n:challenge.n,p:challenge.p,time:challenge.duration});
   $('probability-help').textContent=t('probabilityHelp',{ones:Number.isFinite(s.p*s.length)?format(s.p*s.length):'—'});
   $('model-label').textContent='Bernoulli(p = '+(Number.isFinite(s.p)?s.p:'—')+')';
   document.querySelectorAll('[data-p]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.p)===s.p)));
@@ -208,7 +219,34 @@ function drawResult(){
   if(expanded&&$('results').querySelector('details'))$('results').querySelector('details').open=true;
   $('retry').addEventListener('click',reset);
   $('retry-submit')?.addEventListener('click',submitResult);
+  if(game.status==='complete')setupSharing();
   drawSubmission();
+}
+function setupSharing(){
+  const value={n:game.length,p:model.p,duration:game.duration,score:result.score,language:getLanguage()};
+  const url=challengeURL(value),text=t('shareChallenge')+' Randomness Score: '+value.score.toFixed(1)+' / 100';
+  $('challenge-link').value=url;
+  $('share-preview').src=SHARE_ORIGIN+'/api/share-card?'+challengeParams(value);
+  if(challenge&&mode==='practice'&&value.n===challenge.n&&value.p===challenge.p&&value.duration===challenge.duration){
+    const rounded=Number(value.score.toFixed(1));
+    $('challenge-outcome').hidden=false;
+    $('challenge-outcome').textContent=t(rounded>challenge.score?'challengeWin':rounded===challenge.score?'challengeTie':'challengeTry',{score:challenge.score.toFixed(1)});
+  }
+  const status=$('share-status');
+  const copy=async()=>{try{await navigator.clipboard.writeText(url);status.textContent=t('shareDone');}catch{status.textContent=t('shareFailed');$('challenge-link').focus();$('challenge-link').select();}};
+  $('copy-challenge').onclick=copy;
+  // Prepare the file before the click, preserving transient user activation on mobile.
+  let file=null;
+  void shareCard(value).then(blob=>{file=new File([blob],'binary-lab-'+value.score.toFixed(1)+'.png',{type:'image/png'});}).catch(()=>{});
+  $('share-result').onclick=async()=>{
+    if(!navigator.share){await copy();return;}
+    try{const data={title:'Binary Lab',text,url};if(file&&navigator.canShare?.({files:[file]}))data.files=[file];await navigator.share(data);}
+    catch(error){if(error.name!=='AbortError')await copy();}
+  };
+  $('save-card').onclick=async()=>{
+    try{const blob=file||await shareCard(value),href=URL.createObjectURL(blob),a=document.createElement('a');a.href=href;a.download='binary-lab-'+value.score.toFixed(1)+'.png';a.click();setTimeout(()=>URL.revokeObjectURL(href),1000);}
+    catch{status.textContent=t('shareFailed');}
+  };
 }
 function finish(){
   cancelAnimationFrame(animation);syncControls();render(true);
@@ -321,7 +359,7 @@ document.querySelectorAll('[data-period]').forEach(b=>b.addEventListener('click'
 $('refresh-ranking').addEventListener('click',()=>void loadLeaderboard());
 setInterval(()=>{if(!document.hidden)void loadLeaderboard();},60000);
 relocalize();void prepare();void loadLeaderboard();
-if(!practiceHost&&entry.ranked)document.querySelector('[data-mode="ranking"]').click();
+if(!practiceHost&&entry.ranked&&!challenge)document.querySelector('[data-mode="ranking"]').click();
 if(hasToken())void restoreRankedSession({
   getUser:()=>api('me'),
   onUser:value=>{user=value;refreshSettings();},
