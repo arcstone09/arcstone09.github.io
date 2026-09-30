@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111512">
+  <meta name="description" content="100개의 비트로 실험하는 인간의 무작위성. Bernoulli 모형과 Monte Carlo 보정을 사용하는 키보드 게임.">
+  <title>Binary Lab — 무작위를 입력하세요</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23c5f56b'/%3E%3Ctext x='8' y='44' font-size='38' font-family='monospace'%3E01%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./src/style.css">
+  <script type="module" src="./src/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Binary Lab 홈"><span class="brand-icon">01</span> BINARY LAB<span class="brand-tag">HUMAN RANDOMNESS EXPERIMENT</span></a>
+    <button class="text-button" id="reference-button">게임 개발 참고 <span aria-hidden="true">↗</span></button>
+  </header>
+  <main>
+    <section class="intro">
+      <div class="eyebrow"><span class="live-dot"></span> EXPERIMENT 001 / HUMAN VS. RANDOM</div>
+      <h1>당신의 무작위에는<br><span>패턴이 있을까요?</span></h1>
+      <p>100개의 0과 1. 머릿속의 무작위를 입력하고,<br class="mobile-break"> 확률이 만드는 무작위와 비교해 보세요.</p>
+    </section>
+    <div class="workspace">
+      <section class="game-panel" aria-label="입력 실험">
+        <div class="panel-heading"><span><span class="small-dot"></span> INPUT TERMINAL</span><span class="status-pill" id="phase">STANDBY</span></div>
+        <div class="readouts">
+          <div><span class="field-label">남은 시간 <span>SECONDS</span></span><div class="timer" id="timer">45<span>.0</span></div></div>
+          <div class="count-block"><span class="field-label">입력한 비트 <span>BITS</span></span><div class="bit-count"><span id="count">0</span><span> / 100</span></div></div>
+        </div>
+        <div class="progress-track" role="progressbar" aria-label="입력 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress"><div id="progress-fill"></div></div>
+        <div class="sequence-header"><span>YOUR SEQUENCE</span><span id="model-label">Bernoulli(p = 0.5)</span></div>
+        <div class="sequence-grid" id="sequence" aria-label="입력한 이진 수열"></div>
+        <div class="input-hint" id="input-hint"><span class="cursor-mark">▌</span> 시작하면 이곳에 당신의 패턴이 기록됩니다.</div>
+        <div class="keypad">
+          <button class="bit-key" id="zero" disabled><span class="key-number">0</span><span>ZERO <span aria-hidden="true">↙</span></span></button>
+          <button class="bit-key one-key" id="one" disabled><span class="key-number">1</span><span>ONE <span aria-hidden="true">↙</span></span></button>
+        </div>
+        <div class="keyboard-help"><span><kbd>0</kbd> <kbd>1</kbd> 키보드 또는 버튼으로 입력</span><button class="text-button" id="delete" disabled><kbd>⌫</kbd> 마지막 비트 삭제</button></div>
+      </section>
+      <aside class="setup-panel">
+        <div class="eyebrow">EXPERIMENT SETTINGS</div>
+        <h2>실험을 설정하세요</h2>
+        <p class="muted">직감을 믿고 입력해 보세요.<br>완벽한 균형이 정답은 아닙니다.</p>
+        <form id="settings" novalidate>
+          <label for="probability">1이 나올 확률 <span class="mono">p</span></label>
+          <div class="number-field"><input id="probability" type="number" min="0" max="1" step="any" value="0.5" inputmode="decimal" required aria-describedby="probability-help"><span>PROBABILITY</span></div>
+          <div class="presets" aria-label="확률 빠른 설정"><button type="button" data-p="0.2">0.2</button><button type="button" data-p="0.5" class="selected">0.5</button><button type="button" data-p="0.8">0.8</button></div>
+          <p class="field-help" id="probability-help">0 &lt; p &lt; 1 · 기대되는 1의 개수: <strong id="expected-ones">50</strong></p>
+          <label for="duration">제한시간 <span class="mono">sec</span></label>
+          <div class="number-field"><input id="duration" type="number" min="1" max="600" step="1" value="45" required><span>SECONDS</span></div>
+          <p class="field-help">시간 안에 정확히 100개의 비트를 입력하세요.</p>
+          <div class="calibration-state" id="calibration-state" role="status">확률 모형을 준비하고 있습니다…</div>
+          <p id="validation" class="error" role="alert"></p>
+          <button class="start-button" id="start" type="submit" disabled>실험 시작 <span>↵</span></button>
+          <p class="enter-hint" id="enter-hint">ENTER TO START</p>
+        </form>
+        <div class="lab-note"><span>↳ LAB NOTE</span><p>진짜 무작위에도 연속된 숫자는<br>자연스럽게 나타납니다.</p><code>001<span>1111</span>010<span>0000</span>11</code></div>
+      </aside>
+    </div>
+    <section id="results" class="results" hidden aria-labelledby="result-heading" tabindex="-1"></section>
+    <footer><span>100 BITS. ONE HUMAN. NO PERFECT ANSWER.</span><span>iid Bernoulli(p) · Monte Carlo calibrated</span></footer>
+  </main>
+  <dialog id="reference" aria-labelledby="reference-title">
+    <div class="dialog-header"><div><span class="eyebrow">BEHIND THE EXPERIMENT</span><h2 id="reference-title">게임 개발 참고</h2></div><button id="close-reference" class="close-button" aria-label="설명 닫기">✕</button></div>
+    <div id="reference-content"></div>
+  </dialog>
+</body>
+</html>
