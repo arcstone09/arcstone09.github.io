@@ -5,6 +5,7 @@ import { referenceHTML, EXAMPLE_SEQUENCE } from './reference.js';
 import { resultHTML, format } from './results.js';
 import { t, both, getLanguage, setLanguage, localize, errorText, stored, persist } from './i18n.js';
 import { api, hasToken, saveToken, practiceHost, rankedURL } from './api.js';
+import { rankedLink, rankedEntry, restoreRankedSession } from './ranked-navigation.js';
 
 const $ = id => document.getElementById(id);
 let model=null, game=null, result=null, worker=null, generation=0, pending=null, animation=null, watchdog=null;
@@ -12,8 +13,15 @@ let mode='practice', user=null, starting=false, progress=0, preparationError=fal
 let practiceSettings={p:.5,length:100,duration:45}, cells=[], drawnBits=null;
 let period='24h', leaderboard=null, rankingState='loading', rankingRequest=0;
 let submission='idle', submissionError=null, roundId=null, toastTimer=null;
-setLanguage(stored('binary-lab-language','ko'));
-document.documentElement.dataset.theme=stored('binary-lab-theme','dark')==='light'?'light':'dark';
+const entry=rankedEntry(location.hash);
+if(!practiceHost&&entry.ranked){
+  if(entry.theme)persist('binary-lab-theme',entry.theme);
+  if(entry.language)persist('binary-lab-language',entry.language);
+  history.replaceState(null,'',location.pathname+location.search+'#ranked');
+}
+setLanguage(!practiceHost&&entry.language||stored('binary-lab-language','ko'));
+document.documentElement.dataset.theme=(!practiceHost&&entry.theme||stored('binary-lab-theme','dark'))==='light'?'light':'dark';
+document.querySelector('meta[name="theme-color"]').content=document.documentElement.dataset.theme==='dark'?'#141414':'#f5f5f0';
 const settings=()=>({p:$('probability').valueAsNumber,length:$('sequence-length').valueAsNumber,duration:$('duration').valueAsNumber});
 const editable=target=>target instanceof HTMLElement && (['INPUT','TEXTAREA','SELECT'].includes(target.tagName)||target.isContentEditable);
 const locked=()=>!!game || starting;
@@ -139,7 +147,7 @@ function render(force=false){
 }
 async function start(){
   syncControls();if($('start').disabled||$('reference').open||$('account').open||$('security').open||$('recovery-display').open)return;
-  if(mode==='ranking'&&practiceHost){location.assign(rankedURL);return;}
+  if(mode==='ranking'&&practiceHost){location.assign(rankedLink(rankedURL,document.documentElement.dataset.theme,getLanguage()));return;}
   if(mode==='ranking'&&!user){$('account-status').textContent='';$('account').showModal();return;}
   if(mode==='ranking'){
     starting=true;syncControls();
@@ -313,5 +321,14 @@ document.querySelectorAll('[data-period]').forEach(b=>b.addEventListener('click'
 $('refresh-ranking').addEventListener('click',()=>void loadLeaderboard());
 setInterval(()=>{if(!document.hidden)void loadLeaderboard();},60000);
 relocalize();void prepare();void loadLeaderboard();
-if(!practiceHost&&location.hash==='#ranked')document.querySelector('[data-mode="ranking"]').click();
-if(hasToken())api('me').then(value=>{user=value;refreshSettings();}).catch(error=>{if(error.code==='UNAUTHORIZED')saveToken(null);});
+if(!practiceHost&&entry.ranked)document.querySelector('[data-mode="ranking"]').click();
+if(hasToken())void restoreRankedSession({
+  getUser:()=>api('me'),
+  onUser:value=>{user=value;refreshSettings();},
+  shouldPrompt:()=>entry.ranked&&mode==='ranking'&&!game,
+  onUnauthorized:prompt=>{
+    saveToken(null);
+    if(prompt&&!$('account').open){$('account-status').textContent='';$('account').showModal();}
+  },
+  onError:()=>toast('networkError')
+});
