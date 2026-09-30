@@ -1,4 +1,4 @@
-import { CONFIG, FEATURES, DIAGNOSTICS, validateP, evaluate, calibrateAsync } from './statistics.js';
+import { FEATURES, DIAGNOSTICS, validateP, evaluate, calibrateAsync } from './statistics.js';
 import { createGame, advance } from './game.js';
 import { getCached, putCached } from './cache.js';
 import { referenceHTML } from './reference.js';
@@ -35,7 +35,7 @@ async function prepare() {
   updateStart();
   const p = $('probability').valueAsNumber;
   try { validateP(p); } catch { $('calibration-state').textContent = '유효한 p를 입력해 주세요.'; return; }
-  $('calibration-state').textContent = 'Monte Carlo 모형 준비 중…';
+  $('calibration-state').textContent = '준비 중…';
   const cached = await getCached(p);
   if (token !== generation) return;
   if (cached) { ready(cached, true); return; }
@@ -47,7 +47,7 @@ async function prepare() {
     try {
       const result = await calibrateAsync(p, {
         isCancelled: () => token !== generation,
-        onProgress: progress => { if (token === generation) $('calibration-state').textContent = `호환 모드로 모형 준비 중 · ${Math.round(progress * 100)}%`; },
+        onProgress: progress => { if (token === generation) $('calibration-state').textContent = `준비 중 · ${Math.round(progress * 100)}%`; },
       });
       if (token !== generation) return;
       ready(result, false); void putCached(result);
@@ -68,7 +68,7 @@ async function prepare() {
         clearTimeout(workerWatchdog);
         ready(data.model, false); void putCached(data.model);
         worker?.terminate(); worker = null;
-      } else $('calibration-state').textContent = `Monte Carlo 모형 준비 중 · ${Math.round(data.progress * 100)}%`;
+      } else $('calibration-state').textContent = `준비 중 · ${Math.round(data.progress * 100)}%`;
     };
     worker.onerror = event => { event.preventDefault(); void fallback(); };
     worker.onmessageerror = () => { void fallback(); };
@@ -83,7 +83,7 @@ function failed(message) {
 }
 function ready(value, cached) {
   model = value;
-  $('calibration-state').textContent = `● 모형 준비 완료${cached ? ' · 캐시' : ''} · 24,000개 보정 표본${Math.min(model.p, 1 - model.p) < .01 ? ' · 희귀 사건: 점수가 거칠 수 있습니다' : ''}`;
+  $('calibration-state').textContent = '준비 완료';
   updateStart();
 }
 
@@ -91,7 +91,11 @@ function refreshSettings() {
   const p = $('probability').valueAsNumber;
   $('expected-ones').textContent = Number.isFinite(p) ? format(100 * p) : '—';
   $('model-label').textContent = `Bernoulli(p = ${Number.isFinite(p) ? p : '—'})`;
-  document.querySelectorAll('[data-p]').forEach(button => button.classList.toggle('selected', Number(button.dataset.p) === p));
+  document.querySelectorAll('[data-p]').forEach(button => {
+    const selected = Number(button.dataset.p) === p;
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-pressed', String(selected));
+  });
   if (!game) render();
 }
 $('probability').addEventListener('input', () => {
@@ -120,11 +124,10 @@ function start() {
   game = createGame($('duration').valueAsNumber, performance.now());
   $('results').hidden = true;
   setLocked(true); $('start').disabled = true;
-  $('start').innerHTML = '실험 진행 중 <span>·</span>';
-  $('input-hint').textContent = '0 / 1을 입력하세요. 100번째 비트에서 즉시 완료됩니다.';
+  $('start').innerHTML = '진행 중';
+  $('input-hint').textContent = '100번째 입력에서 자동으로 종료됩니다.';
   document.activeElement?.blur();
   render();
-  if (matchMedia('(max-width: 680px)').matches) $('phase').scrollIntoView({ block: 'start' });
   animation = requestAnimationFrame(tick);
 }
 $('settings').addEventListener('submit', event => { event.preventDefault(); start(); });
@@ -145,7 +148,7 @@ function render() {
   const remaining = game ? Math.max(0, game.deadline - performance.now()) / 1000 : $('duration').valueAsNumber || 0;
   // Complete state retains the time at the last input, since no further render ticks run.
   const [seconds, tenth] = remaining.toFixed(1).split('.');
-  $('timer').innerHTML = `${seconds}<span>.${tenth}</span>`;
+  $('timer').innerHTML = `${seconds}<span>.${tenth}</span><small>초</small>`;
   $('timer').classList.toggle('urgent', !!game && remaining <= 10);
   const bits = game?.bits || [];
   $('count').textContent = bits.length;
@@ -156,7 +159,7 @@ function render() {
     cell.textContent = i < bits.length ? bits[i] : i === bits.length && game?.status === 'playing' ? '_' : '·';
     cell.className = `bit-cell${i < bits.length ? ' filled' : ''}${bits[i] === 1 ? ' one' : ''}${i === bits.length && game?.status === 'playing' ? ' next' : ''}`;
   });
-  $('phase').textContent = !game ? 'STANDBY' : game.status === 'playing' ? 'RECORDING' : game.status === 'complete' ? 'COMPLETE' : 'TIME OUT';
+  $('phase').textContent = !game ? '시작 전' : game.status === 'playing' ? '입력 중' : game.status === 'complete' ? '입력 완료' : '시간 종료';
   $('phase').classList.toggle('active', game?.status === 'playing');
 }
 for (const [id, action] of [['zero', 0], ['one', 1], ['delete', 'backspace']]) $(id).addEventListener('click', () => act(action));
@@ -196,32 +199,35 @@ function finish() {
   ['probability', 'duration'].forEach(id => $(id).disabled = true);
   document.querySelectorAll('[data-p]').forEach(button => button.disabled = true);
   $('start').disabled = true;
-  $('start').innerHTML = '실험 종료 <span>✓</span>';
+  $('start').innerHTML = '게임 종료';
   $('input-hint').textContent = '입력이 종료되었습니다. 아래에서 결과를 확인하세요.';
   $('results').hidden = false;
   if (game.status === 'timeout') {
-    $('results').innerHTML = `<div class="eyebrow">EXPERIMENT INCOMPLETE</div><h2 id="result-heading">시간이 종료되었습니다</h2><div class="score timeout-score">${game.bits.length} / 100 bits</div><p class="result-copy">100개를 완성하지 못해 정식 Randomness Score를 계산하지 않았습니다. 위의 수열에서 이번 입력을 확인할 수 있습니다.</p><p class="result-meta">p = ${model.p} · 제한시간 ${game.duration}초</p>${retryHTML()}`;
+    $('results').innerHTML = `<div class="result-top"><div><h2 id="result-heading">시간이 종료되었습니다</h2><div class="score timeout-score">${game.bits.length}<span> / 100 bits</span></div></div><div class="result-actions">${retryHTML()}</div></div><p class="result-copy">100개를 완성하지 못해 정식 Randomness Score를 계산하지 않았습니다. 입력한 수열은 위에서 확인할 수 있습니다.</p><p class="result-meta">p = ${model.p} · 제한시간 ${game.duration}초</p>`;
   } else {
     const result = evaluate(game.bits, model);
     const all = [...FEATURES, ...DIAGNOSTICS], values = [...result.t, ...result.extra];
     const rows = all.map((feature, i) => {
       const expected = feature.expectation ? feature.expectation(model.p) : model.diagnosticMeans[i];
       const z = i < FEATURES.length ? (values[i] - model.mean[i]) / model.scale[i] : null;
-      return `<tr><td>${feature.label} <span class="scope-label">${i < FEATURES.length ? '' : '진단 전용'}</span></td><td>${format(values[i])}</td><td>${format(expected)}${feature.expectation ? '' : ' (MC)'}</td><td>${z === null ? '—' : `${z >= 0 ? '+' : ''}${z.toFixed(2)}σ`}</td></tr>`;
+      return `<tr><td>${feature.ko} <span class="scope-label">${i < FEATURES.length ? '' : '진단 전용'}</span></td><td>${format(values[i])}</td><td>${format(expected)}${feature.expectation ? '' : ' (MC)'}</td><td>${z === null ? '—' : `${z >= 0 ? '+' : ''}${z.toFixed(2)}σ`}</td></tr>`;
     }).join('');
     const ranked = FEATURES.map((f, i) => ({ label: f.ko, z: Math.abs((values[i] - model.mean[i]) / model.scale[i]) })).sort((a, b) => b.z - a.z);
-    const charts = [0, 1, 13, 14].map(i => `<div class="hist-card"><h4>${all[i].label} <span class="scope-label">${i >= 13 ? '진단 전용 · 점수 미포함' : 'JOINT 포함'}</span></h4><p>관측 ${format(values[i])} · 기대 ${format(all[i].expectation(model.p))}</p>${histogram(i, values[i])}<span class="legend">▏ YOUR INPUT &nbsp; ▪ NULL DISTRIBUTION</span></div>`).join('');
-    $('results').innerHTML = `<div class="eyebrow">EXPERIMENT COMPLETE / 100 BITS RECORDED</div><div class="result-top"><div><h2 id="result-heading">Randomness Score</h2><div class="score">${result.score.toFixed(1)}<span> / 100</span></div></div><div class="result-copy"><strong>${result.score < 5 ? '이 모형에서는 드문 패턴입니다.' : result.score >= 80 ? '선택한 특성들이 모형의 중심에 가깝습니다.' : '당신의 수열을 확률 모형과 비교했습니다.'}</strong><br>설정한 p에 따라 100개의 비트를 독립적으로 무작위 생성했을 때, 당신의 수열과 같거나 더 극단적인 특성(S)을 보일 확률을 추정한 점수입니다. 예를 들어 20점은 무작위 수열의 약 20%가 당신의 수열 이상으로 극단적인 특성을 보인다는 뜻입니다. 당신의 수열이 실제 무작위로 생성되었을 확률은 아닙니다.</div></div><p class="result-meta">p = ${model.p} · S = ${format(result.s)} · NULL SAMPLES ${model.calibrationSamples.toLocaleString()} · 제한시간 ${game.duration}초</p><div class="chart-grid">${charts}</div><h3>수열 자세히 보기</h3><p class="diagnostic-intro">평균에서 표준편차 단위로 가장 멀리 떨어진 특성: ${ranked.slice(0, 3).map(x => `${x.label} (${x.z.toFixed(2)}σ)`).join(', ')}.<br>이는 주변적(marginal) 진단이며 점수 기여도나 별도 검정이 아닙니다. 최종 점수는 상관관계를 반영한 하나의 S로 계산합니다.</p><div class="table-wrap"><table><thead><tr><th>METRIC</th><th>YOUR INPUT</th><th>RANDOM EXPECTATION</th><th>평균으로부터 거리</th></tr></thead><tbody>${rows}</tbody></table></div><p class="diagnostic-intro">기대값은 가능한 경우 이론값, longest run은 보정 표본의 평균(MC)입니다. σ 진단은 학습 표본 평균·표준편차를 사용하며, 학습 분산이 0이면 스케일 1을 사용합니다. 히스토그램은 보정 표본의 빈도를 최대 30개 구간으로 묶어 표시합니다. ${Math.min(model.p, 1 - model.p) < .01 ? '현재 p는 극단적이므로 희귀 사건에 대한 보정 해상도가 제한됩니다.' : ''}</p>${retryHTML()}`;
+    const charts = [0, 1, 13, 14].map(i => `<div class="hist-card"><h4>${all[i].ko} <span class="scope-label">${i >= 13 ? '진단 전용 · 점수 미포함' : 'joint statistic에 포함'}</span></h4><p>관측 ${format(values[i])} · 기대 ${format(all[i].expectation(model.p))}</p>${histogram(i, values[i])}</div>`).join('');
+    const switches = values[1] - 1, expectedSwitches = 198 * model.p * (1 - model.p);
+    const comparison = Math.abs(switches - expectedSwitches) < .001 ? '같았습니다' : switches > expectedSwitches ? '많았습니다' : '적었습니다';
+    const observation = `0과 1이 바뀐 횟수는 ${switches}회로 모형 평균 ${format(expectedSwitches)}회와 비교해 ${comparison}. 1은 ${values[0]}개 입력했습니다(기대 ${format(100 * model.p)}개).`;
+    $('results').innerHTML = `<div class="result-top"><div><h2 id="result-heading">Randomness Score</h2><div class="score">${result.score.toFixed(1)}<span> / 100</span></div><p class="result-meta">p = ${model.p} · 100 bits · 제한시간 ${game.duration}초</p></div><div class="result-actions">${retryHTML()}</div></div><p class="result-copy"><strong>${result.score < 5 ? '이 모형에서는 드문 특성이 관측되었습니다.' : result.score >= 80 ? '선택한 특성들이 모형의 중심에 가깝습니다.' : '당신의 수열을 확률 모형과 비교했습니다.'}</strong><br>설정한 모형에서 무작위로 생성했을 때, 내 수열과 같거나 더 극단적인 특성(S)이 나올 비율에 기반한 점수입니다. 실제로 무작위로 생성되었을 확률은 아닙니다.</p><p class="observation">${observation}</p><h3>관측값과 무작위 모형 비교</h3><p class="diagnostic-intro">각 특성의 관측 사실을 보여주는 진단입니다. 점수 기여도나 점수의 원인을 의미하지 않습니다.</p><div class="legend"><span><i class="observed"></i>내 관측값</span><span><i></i>Monte Carlo 표본 빈도</span></div><div class="chart-grid">${charts}</div><details class="analysis-details"><summary>상세 분석 보기</summary><p class="diagnostic-intro">최종 점수는 feature 사이의 상관관계를 반영한 하나의 joint statistic S에서 계산합니다. S = ${format(result.s)} · 보정 표본 ${model.calibrationSamples.toLocaleString()}개.<br>예를 들어 20점이면 설정한 모형의 무작위 수열 중 약 20%가 내 수열과 같거나 더 극단적인 S를 보인다는 뜻입니다.</p><p class="diagnostic-intro">평균에서 표준편차 단위로 가장 멀리 떨어진 특성: ${ranked.slice(0, 3).map(x => `${x.label} (${x.z.toFixed(2)}σ)`).join(', ')}. 이는 주변적(marginal) 진단이며 독립 배점이나 별도 검정이 아닙니다.</p><div class="table-wrap"><table><thead><tr><th>특성</th><th>내 관측값</th><th>모형 기대값</th><th>평균으로부터 거리</th></tr></thead><tbody>${rows}</tbody></table></div><p class="diagnostic-intro">기대값은 가능한 경우 이론값, longest run은 보정 표본의 평균(MC)입니다. σ 진단은 학습 표본 평균·표준편차를 사용하며, 학습 분산이 0이면 스케일 1을 사용합니다. 히스토그램은 보정 표본의 빈도를 최대 30개 구간으로 묶어 표시합니다. ${Math.min(model.p, 1 - model.p) < .01 ? '현재 p는 극단적이므로 희귀 사건에 대한 보정 해상도가 제한됩니다.' : ''}</p></details>`;
   }
   $('retry').addEventListener('click', reset);
   $('results').focus({ preventScroll: true });
   $('results').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
 }
-function retryHTML() { return '<button id="retry" class="start-button retry-button">다시 하기 <span>↵</span></button><p class="diagnostic-intro">Enter로 설정으로 돌아가기 · 다시 Enter로 시작</p>'; }
+function retryHTML() { return '<button id="retry" class="start-button retry-button">다시 하기 <kbd>Enter</kbd></button><p class="field-help">Enter로 설정으로 돌아가기<br>다시 Enter로 시작</p>'; }
 function reset() {
   game = null; $('results').hidden = true; setLocked(false);
-  $('start').innerHTML = '실험 시작 <span>↵</span>';
-  $('input-hint').innerHTML = '<span class="cursor-mark">▌</span> 시작하면 이곳에 당신의 패턴이 기록됩니다.';
+  $('start').innerHTML = '시작하기 <kbd>Enter</kbd>';
+  $('input-hint').innerHTML = '시작한 뒤 0과 1을 입력하세요.';
   updateStart(); render(); $('start').focus();
 }
 
