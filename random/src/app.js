@@ -4,7 +4,7 @@ import { getCached, putCached } from './cache.js';
 import { referenceHTML, EXAMPLE_SEQUENCE } from './reference.js';
 import { resultHTML, format } from './results.js';
 import { t, both, getLanguage, setLanguage, localize, errorText, stored, persist } from './i18n.js';
-import { api, hasToken, saveToken } from './api.js';
+import { api, hasToken, saveToken, practiceHost, rankedURL } from './api.js';
 
 const $ = id => document.getElementById(id);
 let model=null, game=null, result=null, worker=null, generation=0, pending=null, animation=null, watchdog=null;
@@ -47,10 +47,12 @@ function refreshSettings() {
   document.querySelectorAll('[data-p]').forEach(b=>b.setAttribute('aria-pressed',String(Number(b.dataset.p)===s.p)));
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
   $('mode-help').textContent=mode==='practice'?t('practiceHelp'):t('rankRules')+' · '+(user?t('signedIn',{id:user.username}):t('accountNeeded'));
+  if(mode==='ranking'&&practiceHost)$('mode-help').textContent=t('secureRank');
   if(mode==='ranking'&&user&&!game) {
     const out=document.createElement('button'); out.type='button';out.className='text-button';out.textContent=t('logout');
-    out.addEventListener('click',async()=>{try{await api('logout',{});}catch{}saveToken(null);user=null;refreshSettings();});
+    out.addEventListener('click',async()=>{try{await api('logout',{});user=null;refreshSettings();}catch{toast('networkError');}});
     $('mode-help').append(document.createElement('br'),out);
+    const manage=document.createElement('button');manage.type='button';manage.className='text-button';manage.textContent=t('securityTitle');manage.onclick=()=>$('security').showModal();$('mode-help').append(manage);
   }
   if(!game) render(true);
   syncControls();
@@ -136,7 +138,8 @@ function render(force=false){
   }
 }
 async function start(){
-  syncControls();if($('start').disabled||$('reference').open||$('account').open)return;
+  syncControls();if($('start').disabled||$('reference').open||$('account').open||$('security').open||$('recovery-display').open)return;
+  if(mode==='ranking'&&practiceHost){location.assign(rankedURL);return;}
   if(mode==='ranking'&&!user){$('account-status').textContent='';$('account').showModal();return;}
   if(mode==='ranking'){
     starting=true;syncControls();
@@ -179,7 +182,7 @@ function applySequence(raw){
 $('apply-paste').addEventListener('click',()=>applySequence($('paste-input').value));
 $('sequence').addEventListener('paste',event=>{event.preventDefault();applySequence(event.clipboardData.getData('text'));});
 document.addEventListener('keydown',event=>{
-  if($('reference').open||$('account').open||event.metaKey||event.ctrlKey||event.altKey||event.isComposing)return;
+  if($('reference').open||$('account').open||$('security').open||$('recovery-display').open||event.metaKey||event.ctrlKey||event.altKey||event.isComposing)return;
   if(editable(event.target))return;
   if(event.key==='Enter'&&(event.target instanceof HTMLButtonElement||event.target instanceof HTMLElement&&event.target.tagName==='SUMMARY'))return;
   if(['0','1','Backspace','Enter'].includes(event.key))event.preventDefault();
@@ -256,16 +259,35 @@ for(const id of ['account','reference'])$(id).addEventListener('click',event=>{
   const r=$(id).getBoundingClientRect();
   if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)$(id).close();
 });
-$('account-form').addEventListener('submit',async event=>{
+if(practiceHost){$('account-form')?.remove();$('security-form')?.remove();}
+$('account-form')?.addEventListener('submit',async event=>{
   event.preventDefault();
   const action=event.submitter?.value||'login';
   $('account-status').textContent=t('accountWorking');
   $('account-form').querySelectorAll('button').forEach(b=>b.disabled=true);
   try{
-    const response=await api(action,{username:$('username').value,password:$('password').value});
-    saveToken(response.token);user={username:response.username};$('password').value='';$('account').close();refreshSettings();$('start').focus();
+    const response=await api(action,{username:$('username').value,password:$('password').value,recoveryCode:$('recovery-code').value});
+    user={username:response.username};$('password').value='';$('recovery-code').value='';$('account').close();refreshSettings();$('start').focus();if(response.recoveryCode)showRecovery(response.recoveryCode);
   }catch(error){$('account-status').textContent=errorText(error.code);}
   finally{$('account-form').querySelectorAll('button').forEach(b=>b.disabled=false);}
+});
+function showRecovery(code){$('issued-code').textContent=code;$('recovery-display').showModal();}
+$('copy-recovery').onclick=async()=>{try{await navigator.clipboard.writeText($('issued-code').textContent);toast('copied');}catch{toast('copyFailed');}};
+$('close-recovery').onclick=()=>$('recovery-display').close();
+$('recovery-display').addEventListener('close',()=>{$('issued-code').textContent='';});
+$('close-security').onclick=()=>$('security').close();
+$('security').addEventListener('close',()=>{if($('current-password')){$('current-password').value='';$('new-password').value='';$('confirm-username').value='';}});
+$('account').addEventListener('close',()=>{if($('password')){$('password').value='';$('recovery-code').value='';}});
+$('security-form')?.addEventListener('submit',async event=>{
+  event.preventDefault();const action=event.submitter.value;
+  if(action==='delete-account'&&!confirm(t('deleteWarning')))return;
+  const form=event.currentTarget;form.querySelectorAll('button').forEach(b=>b.disabled=true);
+  try{const value=await api(action,{password:$('current-password').value,newPassword:$('new-password').value,confirm:$('confirm-username').value});
+    $('security-status').textContent=t('securityDone');
+    if(action!=='recovery-code'){user=null;refreshSettings();$('security').close();}
+    $('current-password').value='';$('new-password').value='';
+    if(value.recoveryCode)showRecovery(value.recoveryCode);
+  }catch(error){$('security-status').textContent=errorText(error.code);}finally{form.querySelectorAll('button').forEach(b=>b.disabled=false);}
 });
 async function loadLeaderboard(){
   const token=++rankingRequest;rankingState='loading';drawLeaderboard();
@@ -291,4 +313,5 @@ document.querySelectorAll('[data-period]').forEach(b=>b.addEventListener('click'
 $('refresh-ranking').addEventListener('click',()=>void loadLeaderboard());
 setInterval(()=>{if(!document.hidden)void loadLeaderboard();},60000);
 relocalize();void prepare();void loadLeaderboard();
+if(!practiceHost&&location.hash==='#ranked')document.querySelector('[data-mode="ranking"]').click();
 if(hasToken())api('me').then(value=>{user=value;refreshSettings();}).catch(error=>{if(error.code==='UNAUTHORIZED')saveToken(null);});

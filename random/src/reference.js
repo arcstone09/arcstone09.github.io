@@ -64,8 +64,8 @@ export function referenceHTML() {
       'Reproducible pseudorandom streams are seeded by n, p and version. With 24,000 samples, Monte Carlo standard error near probability 0.5 is about 0.32 points, excluding covariance estimation uncertainty. If numerical overflow occurs at extreme p, S is treated as Infinity and receives the minimum score.') +
       p('목표 길이에 도달하면 즉시 잠기고, 시간 초과 시 정식 점수는 계산하지 않습니다. 참고창을 열어도 시간은 흐릅니다. 랭킹은 100 bit·p=0.5·45초로 서버에서 점수를 다시 계산합니다. 기간별로 실제 제출 시각에 속하는 기록 중 아이디별 최고 점수를 조회합니다. 연습은 랭킹에 제출하지 않습니다.',
       'Input locks immediately at the target length. Incomplete timed-out rounds have no official score. Opening the reference does not pause time. Ranked rounds use 100 bits, p=0.5 and 45 seconds; the server recomputes scores. Each time window uses actual submission timestamps and each account’s best score. Practice does not submit to the leaderboard.') +
-      p('아이디는 대소문자를 구분하지 않고 고유합니다. 비밀번호는 서버에서 salted PBKDF2 해시로 보관합니다. 붙여넣기는 허용되며, 랭킹은 사람의 수동 입력이나 무작위 생성 여부를 보증하지 않습니다.',
-      'Usernames are unique and case-insensitive. Passwords are stored as salted PBKDF2 hashes on the server. Pasting is allowed; the leaderboard does not certify manual entry or random generation.')),
+      p('아이디는 대소문자를 구분하지 않고 고유합니다. 비밀번호는 salted PBKDF2-SHA256 600,000회로 보호합니다. 계정과 랭킹 플레이는 별도 사이트의 HttpOnly 쿠키로 인증하며 복구 코드를 제공합니다. 붙여넣기는 허용되며, 랭킹은 사람의 수동 입력이나 무작위 생성 여부를 보증하지 않습니다.',
+      'Usernames are unique and case-insensitive. Passwords use salted PBKDF2-SHA256 with 600,000 iterations. Accounts and ranked play use HttpOnly cookies on a separate site, with recovery codes. Pasting is allowed; the leaderboard does not certify manual entry or random generation.')),
     section(both('07 · 예시를 복사해 보기', '07 · Copy an example'),
       `<p>${t('exampleHelp')}</p><p>${both('현재 모형에서 약 99.9점입니다. 모형 버전이 바뀌면 점수도 바뀔 수 있습니다.', 'This example scores about 99.9 under the current model. A future model version may change that score.')}</p><div class="code-block"><code>${EXAMPLE_SEQUENCE}</code><button class="copy-button" data-copy aria-label="${t('copy')}">▣ ${t('copy')}</button></div>`)
   ].join('');

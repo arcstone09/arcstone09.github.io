@@ -151,6 +151,10 @@ details h4{font-size:16px;margin:20px 0 8px}
 .warning-note{border-left:2px solid var(--accent);padding-left:14px}
 #account{max-width:460px}
 .account-form{padding:0 26px 24px}
+#recovery-display{padding:26px}
+#recovery-display code{overflow-wrap:anywhere}
+#recovery-display button{margin:12px 8px 0 0}
+#security-form details{margin-top:24px;padding-top:16px;border-top:1px solid var(--line)}
 .account-form p{font-size:14px;line-height:1.8;color:var(--muted)}
 .account-form label{margin-top:18px}
 .account-form input{width:100%;padding:12px;border:1px solid var(--line);border-radius:5px;background:var(--input);font-size:16px}
