@@ -114,7 +114,7 @@ $('duration').addEventListener('input', () => { updateStart(); if (!game) render
 function setLocked(locked) {
   ['probability', 'duration'].forEach(id => $(id).disabled = locked);
   document.querySelectorAll('[data-p]').forEach(button => button.disabled = locked);
-  ['zero', 'one', 'delete'].forEach(id => $(id).disabled = !locked);
+  ['zero', 'one', 'delete', 'paste-input'].forEach(id => $(id).disabled = !locked);
   document.body.classList.toggle('is-playing', locked);
 }
 
@@ -163,6 +163,23 @@ function render() {
   $('phase').classList.toggle('active', game?.status === 'playing');
 }
 for (const [id, action] of [['zero', 0], ['one', 1], ['delete', 'backspace']]) $(id).addEventListener('click', () => act(action));
+let pasteNoticeTimer = null;
+$('paste-input').addEventListener('input', event => {
+  if (game?.status !== 'playing') return;
+  const field = event.currentTarget;
+  const compact = field.value.replace(/\s/g, '');
+  field.value = '';
+  if (!compact) return;
+  if (!/^[01]+$/.test(compact)) {
+    $('input-hint').textContent = '붙여넣기에는 0과 1만 사용할 수 있습니다.';
+    clearTimeout(pasteNoticeTimer);
+    pasteNoticeTimer = setTimeout(() => { if (game?.status === 'playing') $('input-hint').textContent = '100번째 입력에서 자동으로 종료됩니다.'; }, 2400);
+    return;
+  }
+  const remaining = 100 - game.bits.length;
+  compact.slice(0, remaining).split('').forEach(bit => act(Number(bit)));
+  if (compact.length > remaining) $('input-hint').textContent = '100개가 입력되어 나머지 문자는 무시했습니다.';
+});
 document.addEventListener('keydown', event => {
   if ($('reference').open || event.metaKey || event.ctrlKey || event.altKey || event.isComposing) return;
   if (editable(event.target)) return;
@@ -232,6 +249,7 @@ function reset() {
 }
 
 $('reference-content').innerHTML = referenceHTML();
+$('reference-content').insertAdjacentHTML('beforeend', `<details><summary>07 · 점수의 중심과 복붙 예시</summary><p>이 점수는 ‘무작위일 확률’이 아닙니다. 귀무모형에서 내 수열의 S보다 크거나 같은 S가 나오는 비율이므로, 실제 Bernoulli(p) 수열의 점수는 평균적으로 50점 부근입니다. 100점은 무작위일 확률이 100%라는 뜻이 아니라, 보정 표본에서 내 수열 이상으로 큰 S가 거의 관측되지 않았다는 뜻입니다. 선택한 feature에 한해서 모형의 중심적인 수열이라는 의미입니다.</p><p>다음 100-bit 수열을 게임 중 ‘01 수열 붙여넣기’ 입력창에 복사해 넣어 보세요. 자연스러운 균형과 run을 섞어 높은 점수를 노려볼 수 있는 예시지만, 점수는 p와 유한 Monte Carlo 표본에 따라 달라지므로 높은 점수를 보장하지 않습니다.</p><div class="formula">1010011001010110110010000101111000110110100101100111010010010110001000101011111110110000000010101101</div><p>붙여넣기에서는 공백과 줄바꿈을 무시하며 0과 1만 받습니다.</p></details>`);
 $('reference-button').addEventListener('click', () => $('reference').showModal());
 $('close-reference').addEventListener('click', () => $('reference').close());
 $('reference').addEventListener('click', event => { if (event.target === $('reference')) {

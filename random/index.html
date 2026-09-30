@@ -8,6 +8,9 @@
   <title>Binary Lab — How random are you?</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23c4f578'/%3E%3Ctext x='8' y='44' font-size='38' font-family='monospace'%3E01%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="./src/style.css">
+  <style>
+    .paste-label{display:block;font-size:14px;color:#b4b4b4;margin:0 0 6px}.paste-input{display:block;width:100%;min-height:52px;resize:vertical;background:#202020;border:1px solid #666;border-radius:4px;color:#f0f0eb;font:14px/1.5 'IBM Plex Mono',monospace;padding:9px 10px}.paste-input::placeholder{color:#888}.paste-input:disabled{opacity:.55}.paste-help{font-size:13px;color:#b4b4b4;margin:6px 0 12px}
+  </style>
   <script type="module" src="./src/app.js"></script>
 </head>
 <body>
@@ -52,6 +55,9 @@
         <div class="progress-track" role="progressbar" aria-label="입력 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress"><div id="progress-fill"></div></div>
         <div class="sequence-grid" id="sequence" aria-label="입력한 이진 수열"></div>
         <p class="input-hint" id="input-hint">시작한 뒤 0과 1을 입력하세요.</p>
+        <label class="paste-label" for="paste-input">01 수열 붙여넣기</label>
+        <textarea id="paste-input" class="paste-input" rows="2" disabled placeholder="100개의 0과 1을 붙여넣으세요." aria-describedby="paste-help"></textarea>
+        <p class="paste-help" id="paste-help">공백·줄바꿈은 무시합니다. 0과 1만 입력하세요.</p>
         <div class="keypad">
           <button class="bit-key" id="zero" disabled aria-label="0 입력"><span>0</span></button>
           <button class="bit-key" id="one" disabled aria-label="1 입력"><span>1</span></button>
