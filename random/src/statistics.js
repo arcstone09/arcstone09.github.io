@@ -1,26 +1,32 @@
-export const CONFIG = Object.freeze({ length: 100, fitSamples: 16000, calibrationSamples: 24000, ridge: 0.001, maxLag: 5, version: 'v1-13d-16k-24k-r001' });
+export const CONFIG = Object.freeze({ length: 100, fitSamples: 16000, calibrationSamples: 24000, ridge: 0.001, maxLag: 5, version: 'v2-length-13d-16k-24k-r001' });
 
 export function validateP(p) {
   if (!Number.isFinite(p) || p <= 0 || p >= 1) throw new RangeError('p는 0보다 크고 1보다 작아야 합니다.');
   return p;
 }
 
+export function validateLength(n) {
+  if (!Number.isInteger(n) || n < 1 || n > 1000) throw new RangeError('Length must be an integer from 1 to 1000.');
+  return n;
+}
+
 export const FEATURES = [
-  { id: 'ones', label: 'Number of ones', ko: '1의 개수', definition: 'Σᵢ Xᵢ', expectation: p => 100 * p, theory: '100p', detects: '설정된 확률에서 벗어나는 비율', example: '11111111…', group: 'Frequency' },
-  { id: 'runs', label: 'Runs', ko: '연속 덩어리 수', definition: '1 + Σᵢ₌₂¹⁰⁰ 1(Xᵢ ≠ Xᵢ₋₁)', expectation: p => 1 + 198 * p * (1 - p), theory: '1 + 198p(1−p)', detects: '과도한 교대 또는 지나치게 적은 전환', example: '01010101…', group: 'Runs' },
+  { id: 'ones', label: 'Number of ones', ko: '1의 개수', definition: 'Σᵢ Xᵢ', expectation: (p, n = 100) => n * p, theory: 'np', detects: '설정된 확률에서 벗어나는 비율', example: '11111111…', group: 'Frequency' },
+  { id: 'runs', label: 'Runs', ko: '연속 덩어리 수', definition: '1 + Σᵢ₌₂ⁿ 1(Xᵢ ≠ Xᵢ₋₁)', expectation: (p, n = 100) => 1 + 2 * (n - 1) * p * (1 - p), theory: '1 + 2(n−1)p(1−p)', detects: '과도한 교대 또는 지나치게 적은 전환', example: '01010101…', group: 'Runs' },
   ...[0, 1].map(bit => ({ id: `longest${bit}`, label: `Longest ${bit}-run`, ko: `${bit}의 최장 연속 길이`, definition: `max{ℓ : 어떤 연속 ℓ개 bit가 모두 ${bit}} (없으면 0)`, expectation: null, theory: 'Bernoulli(p) Monte Carlo 분포의 평균', detects: '지나치게 길거나 짧은 연속 구간', example: bit ? '111111110…' : '000000001…', group: 'Longest Run' })),
-  ...['00', '01', '10', '11'].map(pattern => ({ id: `pattern${pattern}`, label: `${pattern} count`, ko: `${pattern} 등장 횟수`, definition: `Σᵢ₌₁⁹⁹ 1(XᵢXᵢ₊₁ = ${pattern})`, expectation: p => 99 * [...pattern].reduce((v, b) => v * (b === '1' ? p : 1 - p), 1), theory: `99 × ${[...pattern].map(b => b === '1' ? 'p' : '(1−p)').join(' × ')}`, detects: '인접 bit 사이의 비정상적 패턴 빈도', example: '00110011…', group: 'Pattern Frequency' })),
+  ...['00', '01', '10', '11'].map(pattern => ({ id: `pattern${pattern}`, label: `${pattern} count`, ko: `${pattern} 등장 횟수`, definition: `Σᵢ₌₁⁽ⁿ⁻¹⁾ 1(XᵢXᵢ₊₁ = ${pattern})`, expectation: (p, n = 100) => Math.max(0, n - 1) * [...pattern].reduce((v, b) => v * (b === '1' ? p : 1 - p), 1), theory: `(n−1) × ${[...pattern].map(b => b === '1' ? 'p' : '(1−p)').join(' × ')}`, detects: '인접 bit 사이의 비정상적 패턴 빈도', example: '00110011…', group: 'Pattern Frequency' })),
   ...Array.from({ length: CONFIG.maxLag }, (_, index) => {
     const lag = index + 1;
-    return { id: `ac${lag}`, label: `Autocorrelation · lag ${lag}`, ko: `lag ${lag} 자기상관`, definition: `Σᵢ₌₁⁽¹⁰⁰⁻${lag}⁾ (Xᵢ−p)(Xᵢ₊${lag}−p) / [(100−${lag})p(1−p)]`, expectation: () => 0, theory: '0 (알려진 p로 중심화)', detects: '교대·주기적 반복 관계', example: '010101… → lag 2 양의 상관', group: 'Autocorrelation' };
+    return { id: `ac${lag}`, label: `Autocorrelation · lag ${lag}`, ko: `lag ${lag} 자기상관`, definition: `Σᵢ₌₁⁽ⁿ⁻${lag}⁾ (Xᵢ−p)(Xᵢ₊${lag}−p) / [(n−${lag})p(1−p)]`, expectation: () => 0, theory: '0 (알려진 p로 중심화)', detects: '교대·주기적 반복 관계', example: '010101… → lag 2 양의 상관', group: 'Autocorrelation' };
   }),
 ];
-export const DIAGNOSTICS = ['0000', '1111'].map(pattern => ({ id: `pattern${pattern}`, label: `${pattern} count`, ko: `${pattern} 등장 횟수`, definition: `Σᵢ₌₁⁹⁷ 1(Xᵢ…Xᵢ₊₃ = ${pattern})`, expectation: p => 97 * (pattern === '1111' ? p : 1 - p) ** 4, theory: pattern === '1111' ? '97p⁴' : '97(1−p)⁴', detects: '긴 연속 패턴을 얼마나 피하는지 확인', example: '00000 안의 0000은 2회', group: '추가 진단 (점수 미포함)' }));
+export const DIAGNOSTICS = ['0000', '1111'].map(pattern => ({ id: `pattern${pattern}`, label: `${pattern} count`, ko: `${pattern} 등장 횟수`, definition: `Σᵢ₌₁⁽ⁿ⁻³⁾ 1(Xᵢ…Xᵢ₊₃ = ${pattern})`, expectation: (p, n = 100) => Math.max(0, n - 3) * (pattern === '1111' ? p : 1 - p) ** 4, theory: pattern === '1111' ? 'max(n−3,0)p⁴' : 'max(n−3,0)(1−p)⁴', detects: '긴 연속 패턴을 얼마나 피하는지 확인', example: '00000 안의 0000은 2회', group: '추가 진단 (점수 미포함)' }));
 
 // Known-p centered lag products, not sample-mean Pearson correlation. May exceed ±1.
 export function extract(bits, p) {
   validateP(p);
-  if (bits.length !== CONFIG.length || Array.from(bits).some(b => b !== 0 && b !== 1)) throw new RangeError('정확히 100개의 0/1이 필요합니다.');
+  validateLength(bits.length);
+  if (Array.from(bits).some(b => b !== 0 && b !== 1)) throw new RangeError('Only binary digits are allowed.');
   const t = new Float64Array(FEATURES.length);
   let streak = 0, previous = -1;
   const extra = new Float64Array(2);
@@ -36,7 +42,8 @@ export function extract(bits, p) {
   for (let lag = 1; lag <= CONFIG.maxLag; lag++) {
     let sum = 0;
     for (let i = lag; i < bits.length; i++) sum += (bits[i] - p) * (bits[i - lag] - p);
-    t[7 + lag] = sum / ((bits.length - lag) * p * (1 - p));
+    // A nonexistent lag is represented by zero in both fit and calibration; it carries no information.
+    t[7 + lag] = bits.length > lag ? sum / ((bits.length - lag) * p * (1 - p)) : 0;
   }
   return { t, extra };
 }
@@ -54,13 +61,16 @@ export function makeRng(seed) {
   return () => ((word() >>> 5) * 67108864 + (word() >>> 6)) / 9007199254740992;
 }
 
-export function simulate(p, rng) {
-  return Uint8Array.from({ length: CONFIG.length }, () => Number(rng() < p));
+export function simulate(p, rng, length = CONFIG.length) {
+  validateP(p); validateLength(length);
+  const bits = new Uint8Array(length);
+  for (let i = 0; i < length; i++) bits[i] = Number(rng() < p);
+  return bits;
 }
 
-function seedFor(p, suffix) {
+function seedFor(p, suffix, length) {
   let h = 2166136261;
-  for (const c of `${CONFIG.version}:${p}:${suffix}`) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  for (const c of `${CONFIG.version}:${p}:${length}:${suffix}`) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
   return h >>> 0;
 }
 
@@ -93,16 +103,17 @@ export function statistic(t, model) {
   return s;
 }
 
-function* calibrationSteps(p, { fitSamples = CONFIG.fitSamples, calibrationSamples = CONFIG.calibrationSamples, onProgress = () => {} } = {}) {
+function* calibrationSteps(p, { length = CONFIG.length, fitSamples = CONFIG.fitSamples, calibrationSamples = CONFIG.calibrationSamples, onProgress = () => {} } = {}) {
   validateP(p);
+  validateLength(length);
   if (fitSamples < 2 || calibrationSamples < 1) throw new RangeError('표본 수가 너무 작습니다.');
   const k = FEATURES.length;
   const mean = new Float64Array(k);
   const m2 = Array.from({ length: k }, () => new Float64Array(k));
-  const fitRng = makeRng(seedFor(p, 'fit'));
+  const fitRng = makeRng(seedFor(p, 'fit', length));
   // Multivariate Welford update avoids cancellation in rare-event settings.
   for (let n = 1; n <= fitSamples; n++) {
-    const { t } = extract(simulate(p, fitRng), p);
+    const { t } = extract(simulate(p, fitRng, length), p);
     const delta = t.map((v, i) => v - mean[i]);
     for (let i = 0; i < k; i++) mean[i] += delta[i] / n;
     for (let i = 0; i < k; i++) for (let j = 0; j <= i; j++) m2[i][j] += delta[i] * (t[j] - mean[j]);
@@ -114,13 +125,13 @@ function* calibrationSteps(p, { fitSamples = CONFIG.fitSamples, calibrationSampl
     correlation[i][j] = correlation[j][i] = m2[i][j] / ((fitSamples - 1) * scale[i] * scale[j]);
   }
   for (let i = 0; i < k; i++) correlation[i][i] += CONFIG.ridge;
-  const model = { p, mean, scale, lower: cholesky(correlation), fitSamples, calibrationSamples, version: CONFIG.version };
-  const nullRng = makeRng(seedFor(p, 'null'));
+  const model = { p, length, mean, scale, lower: cholesky(correlation), fitSamples, calibrationSamples, version: CONFIG.version };
+  const nullRng = makeRng(seedFor(p, 'null', length));
   const scores = new Float64Array(calibrationSamples);
   const histograms = Array.from({ length: k + 2 }, () => ({}));
   const diagnosticMeans = new Float64Array(k + 2);
   for (let n = 0; n < calibrationSamples; n++) {
-    const { t, extra } = extract(simulate(p, nullRng), p);
+    const { t, extra } = extract(simulate(p, nullRng, length), p);
     scores[n] = statistic(t, model);
     const values = [...t, ...extra];
     values.forEach((value, i) => {
@@ -154,6 +165,7 @@ export async function calibrateAsync(p, options = {}) {
 }
 
 export function evaluate(bits, model) {
+  if (bits.length !== (model.length || CONFIG.length)) throw new RangeError('Sequence length does not match calibration.');
   const values = extract(bits, model.p);
   const s = statistic(values.t, model);
   // Lower bound includes ties, making discrete null p-values conservative.

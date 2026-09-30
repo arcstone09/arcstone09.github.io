@@ -1,6 +1,6 @@
 import { CONFIG } from './statistics.js';
 const memory = new Map();
-const keyFor = p => `${CONFIG.version}:${p}`;
+const keyFor = (p, length = 100) => `${CONFIG.version}:${p}:${length}`;
 let database;
 // Some WebKit/storage failures never dispatch success or error. Cache is optional:
 // bound the wait so model preparation cannot remain disabled indefinitely.
@@ -28,8 +28,8 @@ function remember(key, model) {
   memory.set(key, model);
   if (memory.size > 6) memory.delete(memory.keys().next().value);
 }
-export async function getCached(p) {
-  const key = keyFor(p);
+export async function getCached(p, length = 100) {
+  const key = keyFor(p, length);
   if (memory.has(key)) {
     const model = memory.get(key); remember(key, model); return model;
   }
@@ -40,7 +40,7 @@ export async function getCached(p) {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     }));
-    if (entry?.model?.version === CONFIG.version && entry.model.p === p) {
+    if (entry?.model?.version === CONFIG.version && entry.model.p === p && entry.model.length === length) {
       remember(key, entry.model);
       void putCached(entry.model);
       return entry.model;
@@ -49,7 +49,7 @@ export async function getCached(p) {
   return null;
 }
 export async function putCached(model) {
-  const key = keyFor(model.p);
+  const key = keyFor(model.p, model.length);
   remember(key, model);
   try {
     const db = await withDeadline(openDB());

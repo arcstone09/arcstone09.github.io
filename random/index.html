@@ -1,81 +1,108 @@
 <!doctype html>
-<html lang="ko">
+<html lang="ko" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#141414">
-  <meta name="description" content="100개의 0과 1로 만드는 무작위. Bernoulli 모형과 비교하는 키보드 게임.">
+  <meta name="description" content="Binary Lab — compare your binary sequence with an independent Bernoulli model.">
   <title>Binary Lab — How random are you?</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='10' fill='%23c4f578'/%3E%3Ctext x='8' y='44' font-size='38' font-family='monospace'%3E01%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="./src/style.css">
-  <style>
-    .sequence-grid{grid-template-columns:repeat(var(--sequence-columns,20),minmax(0,1fr))}
-  </style>
   <script type="module" src="./src/app.js"></script>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="./" aria-label="Binary Lab 홈"><span class="brand-icon" aria-hidden="true">01</span>Binary Lab</a>
-    <div class="top-actions"><button class="text-button" id="language-toggle" type="button">EN</button><button class="text-button" id="theme-toggle" type="button" aria-pressed="false">☼</button><button class="text-button" id="reference-button">게임 개발 참고</button></div>
+    <a class="brand" href="./" aria-label="Binary Lab"><span class="brand-icon" aria-hidden="true">01</span>Binary Lab</a>
+    <div class="top-actions">
+      <div class="segmented compact" role="group" data-label="language">
+        <button type="button" data-language="ko" lang="ko" aria-pressed="true">한국어</button>
+        <button type="button" data-language="en" lang="en" aria-pressed="false">EN</button>
+      </div>
+      <div class="segmented compact" role="group" data-label="theme">
+        <button type="button" data-theme="dark" aria-pressed="true"><span aria-hidden="true">◐</span> <span data-i18n="dark"></span></button>
+        <button type="button" data-theme="light" aria-pressed="false"><span aria-hidden="true">☼</span> <span data-i18n="light"></span></button>
+      </div>
+      <button class="text-button reference-link" id="reference-button" data-i18n="reference"></button>
+    </div>
   </header>
   <main>
-    <section class="intro">
-      <h1 lang="en">How random are you?</h1>
-      <p>시간 안에 100개의 0과 1을 입력하고, 무작위 모형과 비교해 보세요.</p>
-    </section>
+    <section class="intro"><h1 lang="en">How random are you?</h1><p data-i18n="intro"></p></section>
     <div class="workspace">
       <aside class="setup-panel" aria-labelledby="setup-heading">
-        <h2 id="setup-heading">게임 설정</h2>
+        <h2 id="setup-heading" data-i18n="setup"></h2>
         <form id="settings" novalidate>
-          <div class="mode-switch" role="group" aria-label="플레이 모드"><button type="button" class="mode-button selected" data-mode="practice" aria-pressed="true">연습 모드</button><button type="button" class="mode-button" data-mode="ranking" aria-pressed="false">랭킹 모드</button></div>
-          <div class="setting-group identity-group" id="identity-group" hidden><label for="player-id">아이디</label><div class="number-field"><input id="player-id" type="text" maxlength="20" autocomplete="nickname" placeholder="랭킹에 표시할 아이디"></div><p class="field-help">중복되지 않는 아이디를 입력하세요.</p></div>
-          <div class="setting-group">
-            <label for="probability">1이 나올 확률 <span class="mono">p</span></label>
+          <div class="segmented mode-switch" role="group" data-label="mode">
+            <button type="button" data-mode="practice" aria-pressed="true" data-i18n="practice"></button>
+            <button type="button" data-mode="ranking" aria-pressed="false" data-i18n="ranked"></button>
+          </div>
+          <p class="field-help mode-help" id="mode-help"></p>
+          <div class="setting-group probability-group">
+            <label for="probability"><span data-i18n="probability"></span><span class="mono">p</span></label>
             <div class="number-field"><input id="probability" type="number" min="0" max="1" step="any" value="0.5" inputmode="decimal" required aria-describedby="probability-help"></div>
-            <div class="presets" aria-label="확률 빠른 설정"><button type="button" data-p="0.2" aria-pressed="false">0.2</button><button type="button" data-p="0.5" class="selected" aria-pressed="true">0.5</button><button type="button" data-p="0.8" aria-pressed="false">0.8</button></div>
-            <p class="field-help" id="probability-help">0 &lt; p &lt; 1 · 기대되는 1: <span id="expected-ones">50</span>개</p>
+            <div class="presets segmented" role="group" data-label="presets">
+              <button type="button" data-p="0.2" aria-pressed="false">0.2</button><button type="button" data-p="0.5" aria-pressed="true">0.5</button><button type="button" data-p="0.8" aria-pressed="false">0.8</button>
+            </div>
+            <p class="field-help" id="probability-help"></p>
           </div>
           <div class="setting-group">
-            <label for="duration">제한시간</label>
-            <div class="number-field"><input id="duration" type="number" min="1" max="600" step="1" value="45" inputmode="numeric" required aria-describedby="duration-help"><span>초</span></div>
-            <p class="field-help" id="duration-help">1~600초 사이에서 설정하세요.</p>
+            <label for="sequence-length" data-i18n="length"></label>
+            <div class="number-field"><input id="sequence-length" type="number" min="1" max="1000" step="1" value="100" inputmode="numeric" required aria-describedby="length-help"><span>bits</span></div>
+            <p class="field-help" id="length-help" data-i18n="lengthHelp"></p>
           </div>
-          <div class="setting-group length-group"><label for="sequence-length">수열 길이</label><div class="number-field"><input id="sequence-length" type="number" min="1" max="1000" step="1" value="100" inputmode="numeric"><span>bit</span></div><p class="field-help">연습 모드에서 1~1000 bit</p></div>
+          <div class="setting-group">
+            <label for="duration" data-i18n="duration"></label>
+            <div class="number-field"><input id="duration" type="number" min="1" max="600" step="1" value="45" inputmode="numeric" required aria-describedby="duration-help"><span data-i18n="seconds"></span></div>
+            <p class="field-help" id="duration-help" data-i18n="durationHelp"></p>
+          </div>
           <div class="start-group">
-            <div class="calibration-state" id="calibration-state" role="status">준비 중…</div>
+            <div class="calibration-state" id="calibration-state" role="status"></div>
             <p id="validation" class="error" role="alert"></p>
-            <button class="start-button" id="start" type="submit" disabled>시작하기 <kbd>Enter</kbd></button>
-            <p class="field-help start-help" id="enter-hint">100개를 입력하면 바로 종료됩니다.</p>
+            <button class="start-button" id="start" type="submit" disabled></button>
+            <p class="field-help" id="enter-hint"></p>
           </div>
         </form>
       </aside>
-      <section class="game-panel" aria-label="0과 1 입력">
-        <div class="panel-heading"><span id="model-label">Bernoulli(p = 0.5)</span><span id="phase" role="status">시작 전</span></div>
+      <section class="game-panel" data-label="game">
+        <div class="panel-heading"><span id="model-label"></span><span id="phase" role="status"></span></div>
         <div class="readouts">
-          <div><span class="field-label">남은 시간</span><div class="timer" id="timer">45<span>.0</span><small>초</small></div></div>
-          <div class="count-block"><span class="field-label">입력한 비트</span><div class="bit-count"><span id="count">0</span><span> / 100</span></div></div>
+          <div><span class="field-label" data-i18n="timeLeft"></span><div class="timer" id="timer"></div></div>
+          <div class="count-block"><span class="field-label" data-i18n="entered"></span><div class="bit-count"><span id="count">0</span><span id="target-count"> / 100</span></div></div>
         </div>
-        <div class="progress-track" role="progressbar" aria-label="입력 진행률" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress"><div id="progress-fill"></div></div>
-        <div class="sequence-grid" id="sequence" aria-label="입력한 이진 수열"></div>
-        <p class="input-hint" id="input-hint">시작한 뒤 0과 1을 입력하세요.</p>
-        <label class="paste-label" for="paste-input">01 수열 붙여넣기</label>
-        <textarea id="paste-input" class="paste-input" rows="2" disabled placeholder="100개의 0과 1을 붙여넣으세요." aria-describedby="paste-help"></textarea>
-        <p class="paste-help" id="paste-help">공백·줄바꿈은 무시합니다. 0과 1만 입력하세요.</p>
-        <button type="button" class="copy-example" id="copy-example" title="예시 수열 복사" aria-label="예시 수열 복사">▣ 예시 100-bit 복사</button>
-        <div class="keypad">
-          <button class="bit-key" id="zero" disabled aria-label="0 입력"><span>0</span></button>
-          <button class="bit-key" id="one" disabled aria-label="1 입력"><span>1</span></button>
+        <div class="progress-track" role="progressbar" data-label="progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="progress"><div id="progress-fill"></div></div>
+        <div class="sequence-grid" id="sequence" tabindex="0" data-label="sequence"></div>
+        <p class="input-hint" id="input-hint"></p>
+        <div class="keypad"><button class="bit-key" id="zero" disabled data-label="inputZero">0</button><button class="bit-key" id="one" disabled data-label="inputOne">1</button></div>
+        <div class="keyboard-help"><span><kbd>0</kbd> <kbd>1</kbd> <span data-i18n="keyHelp"></span></span><button class="text-button" id="delete" disabled><kbd>⌫</kbd> <span data-i18n="delete"></span></button></div>
+        <div class="paste-area">
+          <label for="paste-input" data-i18n="pasteTitle"></label>
+          <textarea id="paste-input" rows="4" disabled data-placeholder="pastePlaceholder" aria-describedby="paste-help" spellcheck="false"></textarea>
+          <div class="paste-toolbar"><p class="field-help" id="paste-help" data-i18n="pasteHelp"></p><button type="button" class="secondary-button" id="apply-paste" disabled data-i18n="applyPaste"></button></div>
+          <details class="example-details"><summary data-i18n="exampleTitle"></summary><p data-i18n="exampleHelp"></p><div class="code-block"><code id="example-sequence"></code><button type="button" class="copy-button" data-copy data-label="copy"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg><span data-i18n="copy"></span></button></div></details>
         </div>
-        <div class="keyboard-help"><span><kbd>0</kbd> <kbd>1</kbd> 키보드 또는 버튼으로 입력</span><button class="text-button" id="delete" disabled><kbd>⌫</kbd> 마지막 입력 삭제</button></div>
       </section>
     </div>
     <section id="results" class="results" hidden aria-labelledby="result-heading" tabindex="-1"></section>
-    <section class="leaderboard" id="leaderboard" aria-labelledby="leaderboard-heading"><div class="leaderboard-heading"><h2 id="leaderboard-heading">랭킹</h2><span>랭킹 모드 100 bit</span></div><div class="leaderboard-tabs"><button class="selected" data-period="24h">24시간</button><button data-period="week">이번 주</button><button data-period="month">이번 달</button><button data-period="all">전체</button></div><ol id="leaderboard-list"><li class="empty-ranking">아직 이 브라우저에 기록이 없습니다.</li></ol><p class="ranking-note">현재 정적 사이트에서는 기록을 이 브라우저에 저장합니다. 여러 사용자 간 공유 랭킹은 쓰기 가능한 서버 연결이 필요합니다.</p></section>
-    <footer>Bernoulli(p) 모형과 비교하는 100-bit 게임</footer>
+    <section class="leaderboard" id="leaderboard" aria-labelledby="leaderboard-heading">
+      <div class="section-heading"><div><h2 id="leaderboard-heading" data-i18n="leaderboard"></h2><p class="field-help" data-i18n="rankRules"></p></div><button class="secondary-button" id="refresh-ranking" data-i18n="refresh"></button></div>
+      <div class="segmented period-tabs" role="group" data-label="period">
+        <button data-period="24h" aria-pressed="true" data-i18n="day"></button><button data-period="week" aria-pressed="false" data-i18n="week"></button><button data-period="month" aria-pressed="false" data-i18n="month"></button><button data-period="all" aria-pressed="false" data-i18n="all"></button>
+      </div>
+      <p id="ranking-status" class="field-help" role="status"></p>
+      <div class="table-wrap"><table class="ranking-table"><thead><tr><th data-i18n="rank"></th><th data-i18n="username"></th><th data-i18n="score"></th><th data-i18n="recorded"></th></tr></thead><tbody id="leaderboard-list"></tbody></table></div>
+      <p class="field-help" data-i18n="rankingHelp"></p>
+    </section>
+    <footer data-i18n="footer"></footer>
   </main>
-  <dialog id="reference" aria-labelledby="reference-title">
-    <div class="dialog-header"><h2 id="reference-title">게임 개발 참고</h2><button id="close-reference" class="close-button" aria-label="설명 닫기">닫기</button></div>
-    <div id="reference-content"></div>
+  <dialog id="reference" aria-labelledby="reference-title"><div class="dialog-header"><h2 id="reference-title" data-i18n="reference"></h2><button id="close-reference" class="secondary-button" data-i18n="close"></button></div><div id="reference-content"></div></dialog>
+  <dialog id="account" aria-labelledby="account-title"><div class="dialog-header"><h2 id="account-title" data-i18n="accountTitle"></h2><button id="close-account" class="secondary-button" data-i18n="close"></button></div>
+    <form id="account-form" class="account-form"><p data-i18n="accountHelp"></p>
+      <label for="username" data-i18n="username"></label><input id="username" autocomplete="username" minlength="3" maxlength="20" required pattern="[A-Za-z0-9_\-]{3,20}">
+      <p class="field-help" data-i18n="usernameHelp"></p>
+      <label for="password" data-i18n="password"></label><input id="password" type="password" autocomplete="current-password" minlength="10" maxlength="128" required>
+      <p class="field-help" data-i18n="passwordHelp"></p>
+      <div class="account-buttons"><button type="submit" name="action" value="login" class="secondary-button" data-i18n="login"></button><button type="submit" name="action" value="register" class="start-button" data-i18n="register"></button></div><p id="account-status" role="status"></p>
+    </form>
   </dialog>
+  <div class="toast" id="toast" role="status" hidden></div>
 </body>
 </html>
