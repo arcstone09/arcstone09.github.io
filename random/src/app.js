@@ -11,7 +11,20 @@ import { shareCard } from './share-card.js';
 import { setupAdmin } from './admin.js';
 
 const $ = id => document.getElementById(id);
+// Older cached GitHub HTML can briefly load the updated module during publication.
+// Add these controls if missing so existing visitors can still play normally.
+if(!$('account-controls')){
+  const menu=document.createElement('nav');menu.id='account-controls';menu.className='account-controls';menu.dataset.label='accountMenu';
+  menu.innerHTML='<span id="account-identity" class="account-identity" aria-live="polite"></span><div class="account-control-buttons"><button id="sign-in" type="button" class="secondary-button sign-in-button" data-i18n="signIn"></button><button id="account-security" type="button" class="secondary-button" data-i18n="securityTitle" hidden></button><button id="account-admin" type="button" class="secondary-button" data-i18n="adminTitle" hidden></button><button id="sign-out" type="button" class="secondary-button sign-out-button" data-i18n="logout" hidden></button></div>';
+  document.querySelector('main').prepend(menu);
+}
+if(!$('cancel-game')){
+  const controls=document.createElement('div');controls.id='cancel-controls';controls.className='cancel-controls';controls.hidden=true;
+  controls.innerHTML='<span data-i18n="cancelHelp"></span><button id="cancel-game" type="button" class="secondary-button" data-i18n="cancelGame"></button>';
+  document.querySelector('.panel-heading').after(controls);
+}
 let model=null, game=null, result=null, worker=null, generation=0, pending=null, animation=null, watchdog=null;
+let accountBusy=false;
 let mode='practice', user=null, starting=false, progress=0, preparationError=false;
 let practiceSettings={p:.5,length:100,duration:45}, cells=[], drawnBits=null;
 let period='24h', leaderboard=null, rankingState='loading', rankingRequest=0;
@@ -52,11 +65,15 @@ function syncControls() {
   ['probability','duration','sequence-length'].forEach(id=>$(id).disabled=locked()||mode==='ranking');
   document.querySelectorAll('[data-p],[data-mode]').forEach(button=>button.disabled=locked()||(button.hasAttribute('data-p')&&mode==='ranking'));
   ['zero','one','delete','paste-input','apply-paste'].forEach(id=>$(id).disabled=game?.status!=='playing');
-  $('start').disabled=!!game||starting||!valid||!prepared;
+  $('start').disabled=!!game||starting||accountBusy||!valid||!prepared;
   $('start').innerHTML=starting?t('starting'):game?t(game.status==='playing'?'playing':'done'):t('start')+' <kbd>Enter</kbd>';
   $('calibration-state').textContent=preparationError?t('calibrationFailed'):prepared?t('ready'):t('preparing',{percent:Math.round(progress*100)});
   $('enter-hint').textContent=t('playingHint',{n:s.length||100});
   document.body.classList.toggle('is-playing',game?.status==='playing');
+  $('cancel-controls').hidden=game?.status!=='playing';
+  $('account-identity').textContent=user?t('signedIn',{id:user.username}):t('signedOut');
+  $('sign-in').hidden=!!user;$('sign-out').hidden=!user;$('account-security').hidden=!user;$('account-admin').hidden=!user?.isAdmin;
+  ['sign-in','sign-out','account-security','account-admin'].forEach(id=>$(id).disabled=starting||accountBusy||game?.status==='playing');
 }
 function refreshSettings() {
   const s=settings();
@@ -69,13 +86,6 @@ function refreshSettings() {
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===mode)));
   $('mode-help').textContent=mode==='practice'?t('practiceHelp'):t('rankRules')+' · '+(user?t('signedIn',{id:user.username}):t('accountNeeded'));
   if(mode==='ranking'&&practiceHost)$('mode-help').textContent=t('secureRank');
-  if(mode==='ranking'&&user&&!game) {
-    const out=document.createElement('button'); out.type='button';out.className='text-button';out.textContent=t('logout');
-    out.addEventListener('click',async()=>{try{await api('logout',{});user=null;refreshSettings();}catch{toast('networkError');}});
-    $('mode-help').append(document.createElement('br'),out);
-    const manage=document.createElement('button');manage.type='button';manage.className='text-button';manage.textContent=t('securityTitle');manage.onclick=()=>$('security').showModal();$('mode-help').append(manage);
-    if(user.isAdmin){const admin=document.createElement('button');admin.type='button';admin.className='text-button';admin.textContent=t('adminTitle');admin.onclick=openAdmin;$('mode-help').append(admin);}
-  }
   if(!game) render(true);
   syncControls();
 }
@@ -274,6 +284,7 @@ async function submitResult(){
   }catch(error){if(game===submittedGame){submission='error';submissionError=error.code;drawSubmission();}}
 }
 function reset(){
+  cancelAnimationFrame(animation);animation=null;
   game=null;result=null;roundId=null;submission='idle';$('results').hidden=true;$('paste-input').value='';
   drawnBits=null;$('sequence').scrollTop=0;refreshSettings();$('start').focus();
 }
@@ -362,6 +373,21 @@ document.querySelectorAll('[data-period]').forEach(b=>b.addEventListener('click'
 $('refresh-ranking').addEventListener('click',()=>void loadLeaderboard());
 setInterval(()=>{if(!document.hidden)void loadLeaderboard();},60000);
 const openAdmin=setupAdmin(()=>void loadLeaderboard());
+$('sign-in').onclick=()=>{
+  if(practiceHost){location.assign(rankedLink(rankedURL,document.documentElement.dataset.theme,getLanguage()));return;}
+  $('account-status').textContent='';$('account').showModal();
+};
+$('sign-out').onclick=async()=>{
+  accountBusy=true;syncControls();
+  try{await api('logout',{});user=null;refreshSettings();}catch{toast('networkError');}
+  finally{accountBusy=false;syncControls();}
+};
+$('account-security').onclick=()=>$('security').showModal();
+$('account-admin').onclick=openAdmin;
+$('cancel-game').onclick=()=>{
+  if(game?.status!=='playing'||!confirm(t('cancelConfirm')))return;
+  reset();toast('gameCanceled');
+};
 relocalize();void prepare();void loadLeaderboard();
 if(!practiceHost&&entry.ranked&&!challenge)document.querySelector('[data-mode="ranking"]').click();
 if(hasToken())void restoreRankedSession({

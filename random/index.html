@@ -28,6 +28,15 @@
     </div>
   </header>
   <main>
+    <nav id="account-controls" class="account-controls" data-label="accountMenu">
+      <span id="account-identity" class="account-identity" aria-live="polite"></span>
+      <div class="account-control-buttons">
+        <button id="sign-in" type="button" class="secondary-button sign-in-button" data-i18n="signIn"></button>
+        <button id="account-security" type="button" class="secondary-button" data-i18n="securityTitle" hidden></button>
+        <button id="account-admin" type="button" class="secondary-button" data-i18n="adminTitle" hidden></button>
+        <button id="sign-out" type="button" class="secondary-button sign-out-button" data-i18n="logout" hidden></button>
+      </div>
+    </nav>
     <section class="intro"><h1 lang="en">Can You Fake Random?</h1><p data-i18n="intro"></p></section>
     <p id="challenge-banner" class="challenge-banner" hidden></p>
     <div class="workspace">
@@ -68,6 +77,7 @@
       </aside>
       <section class="game-panel" data-label="game">
         <div class="panel-heading"><span id="model-label"></span><span id="phase" role="status"></span></div>
+        <div id="cancel-controls" class="cancel-controls" hidden><span data-i18n="cancelHelp"></span><button id="cancel-game" type="button" class="secondary-button" data-i18n="cancelGame"></button></div>
         <div class="readouts">
           <div><span class="field-label" data-i18n="timeLeft"></span><div class="timer" id="timer"></div></div>
           <div class="count-block"><span class="field-label" data-i18n="entered"></span><div class="bit-count"><span id="count">0</span><span id="target-count"> / 100</span></div></div>

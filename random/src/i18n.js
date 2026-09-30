@@ -1,4 +1,6 @@
 const messages = {
+  accountMenu:['계정 메뉴','Account menu'],signIn:['로그인','Sign in'],signedOut:['로그인되지 않음','Not signed in'],
+  cancelGame:['게임 취소','Cancel game'],cancelHelp:['취소하면 이번 입력과 점수는 저장되지 않습니다.','Canceling discards this round without saving a score.'],cancelConfirm:['게임을 취소할까요? 이번 입력은 사라지고 점수는 저장되지 않습니다.','Cancel this game? Your current inputs will be discarded and no score will be saved.'],gameCanceled:['게임을 취소했습니다.','Game canceled.'],
   rankingPolicy:['사이트에서 제공하는 예시 수열을 그대로 복사·붙여넣기하여 제출한 기록은 관리자가 랭킹에서 제외합니다. 예시 수열은 연습 모드에서 체험해 주세요.','Submissions that copy and paste the site’s example sequence unchanged will be removed from the leaderboard by the administrator. Please try the example in practice mode.'],
   adminTitle:['관리자','Administration'],adminTarget:['조회할 아이디','Player username'],adminSearch:['조회','Find player'],adminSelect:['선택','Select'],adminRecorded:['기록 시각','Submitted'],adminMore:['다음 50개 기록','Next 50 records'],
   adminHelp:['개별 기록을 삭제하면 해당 유저의 다음 최고 점수가 랭킹에 나타날 수 있습니다. 모든 기록 삭제는 계정을 유지하며, 이후 새 플레이는 가능합니다.','Deleting one score may reveal the player’s next best score. Deleting all scores keeps the account and allows future play.'],
